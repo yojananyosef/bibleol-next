@@ -23,11 +23,11 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
   - Monad sets nombrados: `monad_sets`/`monad_sets_monads`; bounds globales `min_m`/`max_m` (ETCBC4: 1..426583); índices `*_fm_i` en first_monad → `find_monads` vía `first_monad BETWEEN`
   - Verificado Gn 1:1: book=1 (monads 1-28762), verse " GEN 01,01" (1-11), words con `g_word_utf8` (בְּ…), `lex` (B, R>CJT/, BR>[…), sp enums — igual que el typeinfo del repo
 
-## FASE 1 — Capa de datos (esquema bol_* 1:1)
-- [ ] `src/lib/db/sqlite.ts`: gestor WAL (patrón alethia-bridge) + 28 tablas `bol_*` migradas de `BibleOL/bolsetup.sql` (mysql→sqlite: tinyint→INTEGER, tinytext/text→TEXT, timestamps INT)
-- [ ] `scripts/migrate-schema.ts` (`bun run db:init`): DDL idempotente + seeds demo (admin/teacher/student con `md5(salt+pw)` real, idiomas, alfabetos, fuentes)
-- [ ] `src/lib/config.ts`: leer `ol.php-dist` → config (pw_salt, users_per_page, mql_driver, oauth2 flags…)
-- [ ] Tests de integración de esquema (tablas/columnas/seed)
+## FASE 1 — Capa de datos (esquema bol_* 1:1) ✅
+- [x] `src/lib/db/sqlite.ts`: gestor WAL (patrón alethia-bridge) + 34 tablas `bol_*` (bolsetup.sql 1:1 + bol_class/bol_userclass/bol_migrations) en `db/schema.sqlite.sql` (mysql→sqlite: tinyint→INTEGER, tinytext/text→TEXT, timestamps INT, ENGINE/COLLATE eliminados, FKs cascade sobre bol_user/bol_exam)
+- [x] `scripts/migrate-schema.ts` (`bun run db:init`): idempotente — esquema + `src/lib/db/seed.ts` (usuarios demo admin/teacher/student con `md5(salt+pw)` real, clase "Demo Class", enrollments, userconfig) + copia de `quiz_templates/` → `data/quizzes/`
+- [x] `src/lib/config.ts`: config del monólito (← ol.php-dist): pw_salt, paginación, mql_driver, oauth2 flags (env), mail
+- [x] Tests de integración (`tests/db.test.ts`, 6/6): esquema completo, seeds bolsetup (lexicons 10085/5433/4581/800/76, alfabetos, fuentes, idiomas, migrations v19), hash md5 PHP, FKs cascade, idempotencia
 
 ## FASE 2 — Auth y usuarios (Ctrl_login, Ctrl_users, Mod_users)
 - [ ] `src/lib/auth/password.ts`: `md5(pw_salt + pw)` idéntico al PHP (compatibilidad BD)
