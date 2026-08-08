@@ -29,14 +29,15 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
 - [x] `src/lib/config.ts`: config del monólito (← ol.php-dist): pw_salt, paginación, mql_driver, oauth2 flags (env), mail
 - [x] Tests de integración (`tests/db.test.ts`, 6/6): esquema completo, seeds bolsetup (lexicons 10085/5433/4581/800/76, alfabetos, fuentes, idiomas, migrations v19), hash md5 PHP, FKs cascade, idempotencia
 
-## FASE 2 — Auth y usuarios (Ctrl_login, Ctrl_users, Mod_users)
-- [ ] `src/lib/auth/password.ts`: `md5(pw_salt + pw)` idéntico al PHP (compatibilidad BD)
-- [ ] `src/lib/auth/session.ts`: cookies firmadas httpOnly (jose) — reemplaza sesión CI (`ol_user`, `language`, `variant`)
-- [ ] `src/lib/services/users.ts` (← Mod_users): verify_login, is_logged_in, roles (admin/teacher/translator), get_me, update_login_stat, warning_mail, expire_users, generate_admin/student
-- [ ] `src/lib/auth/guards.ts`: check_logged_in / check_admin / check_teacher / check_translator (← mod_users checks)
-- [ ] Rutas: `/login`, `/sign-up`, `/forgot-pw`, `/reset`, aceptación de política
-- [ ] `/profile` + `/profile/edit` (← Ctrl_users::profile/edit_one_user), admin: `/admin/users` (listar/filtrar/editar/borrar), `delete_me`
-- [ ] Server Actions para formularios (sign_up, edit_one_user, forgot_pw, reset, accept_policy)
+## FASE 2 — Auth y usuarios (Ctrl_login, Ctrl_users, Mod_users) ✅
+- [x] `src/lib/auth/password.ts`: `md5(pw_salt + pw)` idéntico al PHP + `generate_pw` (juego de caracteres sin I/l/1/O/0) + claves hex 32
+- [x] `src/lib/auth/session.ts`: cookie httpOnly firmada con jose (HS256) con userId/language/variant — reemplaza sesión CI (`ol_user`, `language`, `variant`)
+- [x] `src/lib/services/users.ts` (← Mod_users, 550 líneas 1:1): verify_login, roles (admin/teacher/translator), is_logged_in(_noaccept), CRUD set_user/delete_user (font + exerciseowner→0), reset keys (48h), acceptance code (15 min), política (CURRENT_POLICY_DATE 1512390210), OAuth2 (ggl_/fcb_), expiración (48h/9m/17m/18m), generate_administrator/student
+- [x] `src/lib/auth/guards.ts`: check_logged_in / check_teacher / check_admin / check_translator / check_logged_in_local (DataException + redirect /login)
+- [x] Rutas: `/login`, `/sign-up`, `/forgot-pw`, `/reset/[key]` (one-click, genera pw y envía mail), `/profile` (+ delete_me), `/admin/users` (paginación/orden/filtros/borrar con confirm), `/admin/users/edit` (userid=-1 = nuevo), gating de política en `/`
+- [x] Server Actions (patrón useActionState): login/logout/sign_up/forgot_pw/reset/accept_policy_yes/no/edit_profile/delete_me/admin_save_user/admin_delete_user
+- [x] `src/lib/mail.ts`: nodemailer (SMTP env) con fallback log `[mail demo]` — valida contraseña generada en sign_up/reset
+- [x] E2E curl contra dev server: login→política→home logueado→admin users→crear usuario con roles (verificado en BD)
 
 ## FASE 3 — Capa de corpus (port MQL→SQL) [MAYOR RIESGO]
 - [ ] `src/lib/corpus/emdros-schema.ts`: reverse-engineering esquema SQLite interno Emdros (objetos, features, monads) de ETCBC4 / nestle1904 / jvulgate

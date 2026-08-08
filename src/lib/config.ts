@@ -1,6 +1,4 @@
 import { createHash } from "node:crypto";
-import { mkdirSync, cpSync, existsSync } from "node:fs";
-import path from "node:path";
 
 /** Hash de contraseña idéntico al legacy PHP: md5(pw_salt + password). */
 export function hashPassword(pwSalt: string, password: string): string {

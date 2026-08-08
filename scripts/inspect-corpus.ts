@@ -3,12 +3,12 @@ import Database from "better-sqlite3";
 const db = new Database(process.argv[2], { readonly: true });
 
 const cols = db.prepare("SELECT name FROM pragma_table_info('book_objects')").all();
-console.log("book cols:", cols.map((c: any) => c.name).join(","));
+console.log("book cols:", cols.map((c) => (c as { name: string }).name).join(","));
 const b = db.prepare("SELECT * FROM book_objects ORDER BY first_monad LIMIT 3").all();
 console.log("books:", JSON.stringify(b, null, 1));
 
 const vcols = db.prepare("SELECT name FROM pragma_table_info('verse_objects')").all();
-console.log("verse cols:", vcols.map((c: any) => c.name).join(","));
+console.log("verse cols:", vcols.map((c) => (c as { name: string }).name).join(","));
 const v = db.prepare("SELECT * FROM verse_objects WHERE first_monad BETWEEN 1 AND 10 ORDER BY first_monad LIMIT 3").all();
 console.log("verses monads 1-10:", JSON.stringify(v, null, 1));
 
