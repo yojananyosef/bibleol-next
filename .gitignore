@@ -43,4 +43,6 @@ next-env.d.ts
 # datos locales (corpus Emdros 239 MB, BD app SQLite, ejercicios)
 /data/corpus/
 /data/app.db
+/data/app.db-shm
+/data/app.db-wal
 /data/exercises/
