@@ -14,8 +14,14 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
 - [x] shadcn init (preset nova/base, igual que alethia-bridge) + 23 componentes UI base
 - [x] Scripts npm: `typecheck`, `test`, `db:init`, `corpus:download`
 - [x] Validación: typecheck 0 errores, lint limpio, `bun run build` OK
-- [ ] Descargar corpus Emdros (ETCBC4, nestle1904, jvulgate) desde `BibleOL/db/*.location` → `data/corpus/`
-- [ ] Técnica spike: inspeccionar esquema SQLite interno Emdros de los 3 corpus
+- [x] Descargar corpus Emdros (ETCBC4 204 MB, nestle1904 22 MB, jvulgate 13 MB) desde `BibleOL/db/*.location` (dropbox `dl=1`) → `data/corpus/` (gitignored)
+- [x] Técnica spike: esquema SQLite interno Emdros descifrado (viable, port directo). Hallazgos:
+  - `<otype>_objects`: `object_id_d` PK, `first_monad`/`last_monad` INT, `monads` TEXT (compresión Emdros; decodificador en Fase 3, para words = monad único), columnas `mdf_<feature>`
+  - Enums (sp, gn, nu, vs, vt, st…): INT → `enumeration_constants` (enum_id, value, name) — JOIN para resolver valores
+  - Strings (`g_word_utf8`, `lex`…): INT → `<otype>_mdf_<feat>_set` (id_d ↔ string_value); textos libres inline TEXT (`mdf_g_lex_translit`, `mdf_verb_class`, `mdf_domain`)
+  - Jerarquía: `mdf_mother`, `mdf_functional_parent`, `mdf_distributional_parent`, `mdf_mother_object_type` (apuntan a `object_id_d`)
+  - Monad sets nombrados: `monad_sets`/`monad_sets_monads`; bounds globales `min_m`/`max_m` (ETCBC4: 1..426583); índices `*_fm_i` en first_monad → `find_monads` vía `first_monad BETWEEN`
+  - Verificado Gn 1:1: book=1 (monads 1-28762), verse " GEN 01,01" (1-11), words con `g_word_utf8` (בְּ…), `lex` (B, R>CJT/, BR>[…), sp enums — igual que el typeinfo del repo
 
 ## FASE 1 — Capa de datos (esquema bol_* 1:1)
 - [ ] `src/lib/db/sqlite.ts`: gestor WAL (patrón alethia-bridge) + 28 tablas `bol_*` migradas de `BibleOL/bolsetup.sql` (mysql→sqlite: tinyint→INTEGER, tinytext/text→TEXT, timestamps INT)
