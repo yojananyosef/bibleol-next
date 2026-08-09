@@ -31,7 +31,26 @@ export function applySchema(db: Database.Database): void {
   const n = db
     .prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name LIKE 'bol\\_%' ESCAPE '\\'")
     .get() as { n: number };
-  if (n.n > 0) return;
+  if (n.n > 0) {
+    // BD existente: migra las tablas añadidas después del esquema inicial
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS bol_bible_refs (
+        id INTEGER NOT NULL, book TEXT NOT NULL, booknumber INTEGER NOT NULL,
+        chapter INTEGER NOT NULL, verse INTEGER NOT NULL, picture INTEGER NOT NULL,
+        PRIMARY KEY (id)
+      );
+      CREATE TABLE IF NOT EXISTS bol_bible_urls (
+        id INTEGER NOT NULL, book TEXT NOT NULL, booknumber INTEGER NOT NULL,
+        chapter INTEGER NOT NULL, verse INTEGER NOT NULL, url TEXT NOT NULL,
+        type char(1) NOT NULL, PRIMARY KEY (id)
+      );
+      CREATE TABLE IF NOT EXISTS bol_heb_urls (
+        id INTEGER NOT NULL, lex TEXT NOT NULL, language TEXT NOT NULL,
+        url TEXT NOT NULL, icon TEXT NOT NULL, PRIMARY KEY (id)
+      );
+    `);
+    return;
+  }
   db.exec(readFileSync(SCHEMA_FILE, "utf8"));
 }
 

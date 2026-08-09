@@ -76,3 +76,9 @@ export async function checkLoggedInLocal(): Promise<users.UserRow> {
   if (u.oauth2_login) throw new DataException(`must_not_be_${u.oauth2_login}`);
   return u;
 }
+
+/** Idioma de la sesión (preferencia del usuario) con fallback "en". */
+export async function sessionLanguage(): Promise<string> {
+  const session = await getSession();
+  return session?.language || "en";
+}
