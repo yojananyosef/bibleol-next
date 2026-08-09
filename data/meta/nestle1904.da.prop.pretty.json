@@ -1,0 +1,339 @@
+{
+    "dbdescription": "Græsk (Nestle 1904, NT)",
+    "dbcopyright": "Ingen ophavsret.",
+    "emdrosobject": {
+        "word": {
+            "_objname": "Ord",
+            "lexeme_occurrences": "Forekomster",
+            "frequency_rank": "Hyppighedsrang",
+            "hint": "Tip",
+            "person": "Person",
+            "voice": "Diatese",
+            "tense": "Aspekt-tid",
+            "mood": "Modus",
+            "lemma": "Leksem",
+            "raw_lemma": "Leksem (små bogstaver, ingen accenter)",
+            "normalized": "Normaliseret",
+            "raw_normalized": "Normaliseret (små bogstaver, ingen accenter)",
+            "number": "Tal",
+            "possessor_number": "Ejers tal",
+            "suffix": "Ekstra",
+            "surface": "Tekst",
+            "strongs": "Strongs tal",
+            "strongs_unreliable": "Strong utroværdig?",
+            "gender": "Køn",
+            "case": "Kasus",
+            "psp": "Ordklasse",
+            "verb_type": "Verbaltype",
+            "noun_stem": "Substantivstamme",
+            "noun_declension": "Deklination"
+        },
+        "clause1": {
+            "_objname": "Ledsætning niveau 1",
+            "typ": "Funktion"
+        },
+        "clause1_abbrev": {
+            "_objname": "Ledsætning1"
+        },
+        "clause2": {
+            "_objname": "Ledsætning niveau 2",
+            "typ": "Funktion"
+        },
+        "clause2_abbrev": {
+            "_objname": "Ledsætning2"
+        },
+        "sentence": {
+            "_objname": "Sætning"
+        }
+    },
+    "emdrostype": {
+        "boolean_t": {
+            "false": "nej",
+            "true": "ja"
+        },
+        "tense_t": {
+            "pluperfect": "Perfektiv (præteritum)",
+            "imperfect": "Imperfektiv (præteritum)",
+            "second_future": "Anden futurum",
+            "present": "Imperfektiv (præsens)",
+            "aorist": "Aorist (præteritum)",
+            "second_aorist": "Anden aorist (præteritum)",
+            "second_pluperfect": "Anden perfektiv (præteritum)",
+            "future": "Futurum",
+            "second_perfect": "Anden perfektiv (præteritum)",
+            "NA": "-",
+            "perfect": "Perfektiv (præsens)"
+        },
+        "suffix_t": {
+            "crasis": "Crasis",
+            "interrogative": "Interrogativ",
+            "comparative": "Komparativ",
+            "negative": "Negativ",
+            "NA": "-",
+            "superlative": "Superlativ",
+            "attic": "Attisk",
+            "particle_attached": "Tilknyttet partikel"
+        },
+        "mood_t": {
+            "optative": "Optativ",
+            "participle": "Participium",
+            "imperative": "Imperativ",
+            "subjunctive": "Konjunktiv",
+            "imperative_participle": "Imperativ participium",
+            "indicative": "Indikativ",
+            "infinitive": "Infinitiv",
+            "NA": "-"
+        },
+        "gender_t": {
+            "neuter": "#4 Neutrum",
+            "masculine": "#2 Maskulinum",
+            "feminine": "#3 Femininum",
+            "NA": "#1 -"
+        },
+        "case_t": {
+            "nominative": "#2 Nominativ",
+            "dative": "#5 Dativ",
+            "vocative": "#6 Vokativ",
+            "accusative": "#3 Akkusativ",
+            "NA": "#1 -",
+            "genitive": "#4 Genitiv"
+        },
+        "psp_t": {
+            "letter_indeclinable": "Bogstav, ubøj.",
+            "hebrew": "Hebraisk",
+            "conjunction": "Konjunktion",
+            "reciprocal_pronoun": "Reciprokt pronomen",
+            "cond": "Kondition",
+            "particle": "Partikel",
+            "interjection": "Interjektion",
+            "adverb": "Adverbium",
+            "verb": "Verbum",
+            "correlative_or_interrogative_pronoun": "Korrel. el. interrog. pron.",
+            "possessive_pronoun": "Possessivt pronomen",
+            "personal_pronoun": "Personligt pronomen",
+            "aramaic": "Aramæisk",
+            "numeral_indeclinable": "Talord, ubøj.",
+            "reflexive_pronoun": "Refleksivt pronomen",
+            "correlative_pronoun": "Korrelativt pronomen",
+            "noun_other_type_indeclinable": "Substantive (anden type), ubøj.",
+            "adjective": "Adjektiv",
+            "demonstrative_pronoun": "Demonstrativt pronomen",
+            "relative_pronoun": "Relativt pronomen",
+            "preposition": "Præposition",
+            "interrogative_pronoun": "Interrogativt pronomen",
+            "article": "Artikel",
+            "proper_noun_indeclinable": "Egennavn, ubøj.",
+            "noun": "Substantiv",
+            "indefinite_pronoun": "Indefinit pronomen",
+            "NA": "-"
+        },
+        "number_t": {
+            "NA": "#1 -",
+            "plural": "#3 Pluralis",
+            "singular": "#2 Singularis"
+        },
+        "voice_t": {
+            "middle_or_passive": "Medium eller passiv",
+            "passive": "Passiv",
+            "impersonal_active": "Upersonligt aktiv",
+            "active": "Aktiv",
+            "passive_deponent": "Passiv deponent",
+            "NA": "-",
+            "middle_or_passive_deponent": "Medium eller passiv deponent",
+            "middle_deponent": "Medium deponent",
+            "middle": "Medium"
+        },
+        "person_t": {
+            "second_person": "#3 2.",
+            "third_person": "#4 3.",
+            "first_person": "#2 1.",
+            "NA": "#1 -"
+        },
+        "verb_type_t": {
+            "NA": "#1 -",
+            "alpha": "#2 α-stamme",
+            "beta": "#3 β-stamme",
+            "gamma": "#4 γ-stamme",
+            "delta": "#5 δ-stamme",
+            "epsilon": "#6 ε-stamme",
+            "epsilon_upsilon": "#7 ευ-stamme",
+            "zeta": "#8 ζ-stamme",
+            "eta": "#9 η-stamme",
+            "theta": "#10 θ-stamme",
+            "iota": "#11 ι-stamme",
+            "kappa": "#12 κ-stamme",
+            "lambda": "#13 λ-stamme",
+            "mu": "#14 μ-stamme",
+            "mu_iota": "#15 μι-verbum",
+            "nu": "#16 ν-stamme",
+            "omicron": "#17 ο-stamme",
+            "pi": "#18 π-stamme",
+            "rho": "#19 ρ-stamme",
+            "sigma_kappa": "#20 σκ-verbum",
+            "tau": "#21 τ-stamme",
+            "upsilon": "#22 υ-stamme",
+            "phi": "#23 φ-stamme",
+            "khi": "#24 χ-stamme",
+            "irregular": "#25 Uregelmæssigt"
+        },
+        "noun_stem_t": {
+            "NA": "#1 -",
+            "alpha": "#2 α-stamme",
+            "beta": "#3 β-stamme",
+            "gamma": "#4 γ-stamme",
+            "delta": "#5 δ-stamme",
+            "epsilon_upsilon": "#6 ευ-stamme",
+            "iota": "#7 ι-stamme",
+            "kappa": "#8 κ-stamme",
+            "kappa_tau": "#9 κτ-stamme",
+            "nu": "#10 ν-stamme",
+            "nu_tau": "#11 ντ-stamme",
+            "omicron": "#12 ο-stamme",
+            "omicron_upsilon": "#13 ου-stamme",
+            "pi": "#14 π-stamme",
+            "rho": "#15 ρ-stamme",
+            "sigma": "#16 ς-stamme",
+            "tau": "#17 τ-stamme",
+            "upsilon": "#18 υ-stamme",
+            "khi": "#19 χ-stamme",
+            "omega": "#20 ω-stamme",
+            "irregular": "#21 Uregelmæssigt",
+            "indeclinable": "#22 Ubøjeligt"
+        },
+        "noun_declension_t": {
+            "NA": "#1 -",
+            "first_eta": "#2 1. (-η)",
+            "first_alpha_breve": "#3 1. (-ᾰ)",
+            "first_alpha_macron": "#4 1. (-ᾱ)",
+            "first_alpha_macron_doric": "#5 1. (-ᾱ; dorisk genitiv)",
+            "second_d": "#6 2.",
+            "second_attic": "#7 2. (attisk)",
+            "third_d": "#8 3.",
+            "irregular": "#9 Uregelmæssigt",
+            "indeclinable": "#10 Ubøjeligt"
+        },
+        "clause_type_t_abbrev": {
+            "ADV": "ADV",
+            "CL": "CL",
+            "IO": "IO",
+            "O": "O",
+            "O2": "O2",
+            "P": "P",
+            "S": "S",
+            "V": "V",
+            "VC": "VC"
+        },
+        "clause_type_t": {
+            "ADV": "Adverbiel",
+            "CL": "Sætning",
+            "IO": "Indirekte objekt",
+            "O": "Objekt",
+            "O2": "Andet objekt",
+            "P": "Prædikat",
+            "S": "Subjekt",
+            "V": "Verbal",
+            "VC": "Verbal copula"
+        }
+    },
+    "grammargroup": {
+        "word": {
+            "lexeme": "Leksem",
+            "morphology": "Morfologi",
+            "glosses": "Gloser"
+        }
+    },
+    "grammarmetafeature": {
+        "word": {
+            "pgn": "Person, køn, tal"
+        }
+    },
+    "grammarsubfeature": {
+        "word": {
+            "person": {
+                "first_person": "1",
+                "second_person": "2",
+                "third_person": "3",
+                "NA": "-"
+            },
+            "gender": {
+                "feminine": "F",
+                "masculine": "M",
+                "neuter": "N",
+                "NA": "-"
+            },
+            "number": {
+                "plural": "Pl",
+                "singular": "Sg",
+                "NA": "-"
+            }
+        }
+    },
+    "universe": {
+        "book": {
+            "_label": "%s",
+            "Matthew": "Matthæus",
+            "Mark": "Markus",
+            "Luke": "Lukas",
+            "John": "Johannes",
+            "Acts": "Apostlenes Gerninger",
+            "Romans": "Romerbrevet",
+            "I_Corinthians": "1. Korintherbrev",
+            "II_Corinthians": "2. Korintherbrev",
+            "Galatians": "Galaterbrevet",
+            "Ephesians": "Efeserbrevet",
+            "Philippians": "Filipperbrevet",
+            "Colossians": "Kolossenserbrevet",
+            "I_Thessalonians": "1. Thessalonikerbrev",
+            "II_Thessalonians": "2. Thessalonikerbrev",
+            "I_Timothy": "1. Timotheusbrev",
+            "II_Timothy": "2. Timotheusbrev",
+            "Titus": "Titusbrevet",
+            "Philemon": "Filemonbrevet",
+            "Hebrews": "Hebræerbrevet",
+            "James": "Jakobsbrevet",
+            "I_Peter": "1. Petersbrev",
+            "II_Peter": "2. Petersbrev",
+            "I_John": "1. Johannesbrev",
+            "II_John": "2. Johannesbrev",
+            "III_John": "3. Johannesbrev",
+            "Jude": "Judasbrevet",
+            "Revelation": "Johannes' Åbenbaring"
+        },
+        "chapter": {
+            "_label": "Kapitel %s"
+        },
+        "verse": {
+            "_label": "Vers %s"
+        },
+        "reference": {
+            "_label": "%s %d,%d",
+            "Matthew": "Matt",
+            "Mark": "Mark",
+            "Luke": "Luk",
+            "John": "Joh",
+            "Acts": "ApG",
+            "Romans": "Rom",
+            "I_Corinthians": "1 Kor",
+            "II_Corinthians": "2 Kor",
+            "Galatians": "Gal",
+            "Ephesians": "Ef",
+            "Philippians": "Fil",
+            "Colossians": "Kol",
+            "I_Thessalonians": "1 Thess",
+            "II_Thessalonians": "2 Thess",
+            "I_Timothy": "1. Tim",
+            "II_Timothy": "2. Tim",
+            "Titus": "Tit",
+            "Philemon": "Filem",
+            "Hebrews": "Hebr",
+            "James": "Jak",
+            "I_Peter": "1 Pet",
+            "II_Peter": "2 Pet",
+            "I_John": "1 Joh",
+            "II_John": "2 Joh",
+            "III_John": "3 Joh",
+            "Jude": "Jud",
+            "Revelation": "Åb"
+        }
+    }
+}

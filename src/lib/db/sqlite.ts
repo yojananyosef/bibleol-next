@@ -5,6 +5,7 @@ import Database from "better-sqlite3";
 export const DATA_DIR = process.env.BIBLEOL_DATA_DIR ?? path.join(process.cwd(), "data");
 export const APP_DB_FILE = path.join(DATA_DIR, "app.db");
 export const CORPUS_DIR = path.join(DATA_DIR, "corpus");
+export const META_DIR = path.join(DATA_DIR, "meta");
 export const QUIZZES_DIR = path.join(DATA_DIR, "quizzes");
 
 const SCHEMA_FILE = path.join(process.cwd(), "db", "schema.sqlite.sql");

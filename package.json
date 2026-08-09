@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test \"tests/*.test.ts\"",
+    "test": "node --test \"tests/**/*.test.ts\"",
     "db:init": "node scripts/migrate-schema.ts",
     "corpus:download": "node scripts/download-corpus.ts"
   },

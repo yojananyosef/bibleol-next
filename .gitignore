@@ -46,3 +46,9 @@ next-env.d.ts
 /data/app.db-shm
 /data/app.db-wal
 /data/exercises/
+/data/lexicons.db
+/data/lexicons.db-shm
+/data/lexicons.db-wal
+/data/hints/*.db-shm
+/data/hints/*.db-wal
+/data/hints/ETCBC4_words.db
