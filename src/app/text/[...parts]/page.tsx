@@ -57,6 +57,9 @@ export default async function PassagePage({
           bookTitle={result.bookTitle}
           dictionary={result.dictionary}
           shebanq_link={result.shebanq_link}
+          dbinfo={result.reader}
+          l10n={result.reader.l10n}
+          typeinfo={result.reader.typeinfo}
         />
       </div>
     </main>

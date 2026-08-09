@@ -1,7 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { MonadObjectJSON } from "@/lib/corpus/dictionary";
+import type { ReaderL10n, ReaderSentenceGrammar } from "@/lib/reader/sentencegrammar";
+import { enhanceSentenceGrammar } from "@/lib/reader/sentencegrammar";
+import { getSentenceGrammarFor } from "@/lib/reader/sentencegrammar";
+import { grammarInfoTable, type GrammarInfoRow } from "@/lib/reader/grammar-info";
+import { GrammarDialog } from "@/components/text/grammar-dialog";
 
 export interface TextDisplayProps {
   db: string;
@@ -13,6 +18,14 @@ export interface TextDisplayProps {
     monadObjects: { level: number; objects: MonadObjectJSON[] }[];
   };
   shebanq_link: string | null;
+  dbinfo: {
+    sentencegrammar: ReaderSentenceGrammar[];
+    objectSettings: Record<string, { featuresetting?: Record<string, { foreignText?: boolean; transliteratedText?: boolean }> }>;
+    objHasSurface: string;
+    surfaceFeature: string;
+  };
+  l10n: ReaderL10n;
+  typeinfo: { obj2feat: Record<string, Record<string, string>> };
 }
 
 interface Word {
@@ -36,7 +49,11 @@ function contains(monads: string, monad: number): boolean {
   return segments(monads).some(([lo, hi]) => monad >= lo && monad <= hi);
 }
 
-export function TextDisplay({ db, bookTitle, dictionary, shebanq_link }: TextDisplayProps) {
+export function TextDisplay({ db, bookTitle, dictionary, shebanq_link, dbinfo, l10n, typeinfo }: TextDisplayProps) {
+  const [selected, setSelected] = useState<{ heading: string; rows: GrammarInfoRow[] } | null>(null);
+
+  const grammar = useMemo(() => enhanceSentenceGrammar(dbinfo.sentencegrammar), [dbinfo.sentencegrammar]);
+
   const words = useMemo(() => {
     const level0 = dictionary.monadObjects.find((l) => l.level === 0)?.objects ?? [];
     return level0
@@ -89,6 +106,20 @@ export function TextDisplay({ db, bookTitle, dictionary, shebanq_link }: TextDis
     return parts.join(" · ");
   };
 
+  const openGrammar = (w: Word) => {
+    const sengram = getSentenceGrammarFor(grammar, "word");
+    if (sengram === null) return;
+    const info = grammarInfoTable(
+      sengram,
+      w.features ?? {},
+      l10n,
+      typeinfo,
+      dbinfo,
+      { setHead: true, hideWord: false },
+    );
+    setSelected({ heading: info.heading, rows: info.rows });
+  };
+
   return (
     <div className="space-y-4" dir="auto">
       <header className="flex flex-wrap items-center justify-between gap-2">
@@ -113,16 +144,31 @@ export function TextDisplay({ db, bookTitle, dictionary, shebanq_link }: TextDis
               {p.words.map((w, wi) => {
                 const title = glossTitle(w);
                 return (
-                  <span key={wi} title={title || undefined} className="cursor-help">
+                  <button
+                    key={wi}
+                    type="button"
+                    title={title || undefined}
+                    className="cursor-help rounded px-0.5 hover:bg-accent hover:text-accent-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    onClick={() => openGrammar(w)}
+                  >
                     <bdi>{w.text}</bdi>
                     {w.suffix}
-                  </span>
+                  </button>
                 );
               })}
             </p>
           ))}
         </section>
       ))}
+
+      <GrammarDialog
+        open={selected !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelected(null);
+        }}
+        heading={selected?.heading ?? ""}
+        rows={selected?.rows ?? []}
+      />
     </div>
   );
 }

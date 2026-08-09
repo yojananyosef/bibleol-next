@@ -6,6 +6,7 @@
 
 import { getEmdros, findMonads, dbAndBooks, shebanqLink, type DbBooks } from "@/lib/corpus/emdros";
 import { Dictionary, type MonadObjectJSON } from "@/lib/corpus/dictionary";
+import type { ReaderL10n, ReaderSentenceGrammar } from "@/lib/reader/sentencegrammar";
 import { Picdb } from "@/lib/corpus/picdb";
 import { getAppDb } from "@/lib/db/sqlite";
 
@@ -20,6 +21,15 @@ export interface ShowTextResult {
   l10n_json: string;
   typeinfo_json: string;
   shebanq_link: string | null;
+  /** Dbinfo/l10n/typeinfo parseados para la UI (sentencegrammar, settings). */
+  reader: {
+    sentencegrammar: ReaderSentenceGrammar[];
+    objectSettings: Record<string, { featuresetting?: Record<string, { foreignText?: boolean; transliteratedText?: boolean }> }>;
+    objHasSurface: string;
+    surfaceFeature: string;
+    l10n: ReaderL10n;
+    typeinfo: { obj2feat: Record<string, Record<string, string>> };
+  };
 }
 
 /**
@@ -55,6 +65,15 @@ export function showText(
     },
   );
 
+  const dbinfoParsed = JSON.parse(handle.dbconfig.dbinfo_json) as {
+    sentencegrammar: ReaderSentenceGrammar[];
+    objectSettings: Record<string, { featuresetting?: Record<string, { foreignText?: boolean; transliteratedText?: boolean }> }>;
+    objHasSurface: string;
+    surfaceFeature: string;
+  };
+  const typeinfoParsed = JSON.parse(handle.dbconfig.typeinfo_json) as { obj2feat: Record<string, Record<string, string>> };
+  const l10nParsed = JSON.parse(handle.dbconfig.l10n_json) as ReaderL10n;
+
   return {
     db,
     bookTitle: dict.get_book_title(),
@@ -63,6 +82,14 @@ export function showText(
     l10n_json: handle.dbconfig.l10n_json,
     typeinfo_json: handle.dbconfig.typeinfo_json,
     shebanq_link: shebanqLink(db, book, chapter),
+    reader: {
+      sentencegrammar: dbinfoParsed.sentencegrammar,
+      objectSettings: dbinfoParsed.objectSettings,
+      objHasSurface: dbinfoParsed.objHasSurface,
+      surfaceFeature: dbinfoParsed.surfaceFeature,
+      l10n: l10nParsed,
+      typeinfo: typeinfoParsed,
+    },
   };
 }
 
