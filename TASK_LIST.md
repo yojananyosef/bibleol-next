@@ -39,22 +39,24 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
 - [x] `src/lib/mail.ts`: nodemailer (SMTP env) con fallback log `[mail demo]` — valida contraseña generada en sign_up/reset
 - [x] E2E curl contra dev server: login→política→home logueado→admin users→crear usuario con roles (verificado en BD)
 
-## FASE 3 — Capa de corpus (port MQL→SQL) [MAYOR RIESGO]
-- [ ] `src/lib/corpus/emdros-schema.ts`: reverse-engineering esquema SQLite interno Emdros (objetos, features, monads) de ETCBC4 / nestle1904 / jvulgate
-- [ ] `src/lib/corpus/mql.ts`: traductor del subconjunto MQL usado por BibleOL (~30 patrones de Mod_askemdros/Dictionary) → SQL directo parametrizado
-- [ ] `src/lib/corpus/db-config.ts` (← Db_config + `*.db.json`): typeinfo parser (objectSettings, featuresetting, indirdb/sql_command para gloss/hint/glossurl), sentencegrammar, universeHierarchy, charSet, surfaceFeature
-- [ ] Property files: parser `property_files/*.lang.prop.pretty.json` (glosas 12 idiomas) + `ETCBC4_hints.db` / `ETCBC4_words.db` reutilizados tal cual
-- [ ] `find_monads`, `getMonadsAtLevel`, fullUniverse (← Mod_askemdros + Mql)
-- [ ] Tests de paridad: pasajes fijos (Gn 1:1-3, Jn 1:1, Jn 3:16) en los 3 corpora vs salida esperada
+## FASE 3 — Capa de corpus (port MQL→SQL) ✅
+- [x] `src/lib/corpus/emdros-schema.ts`: reverse-engineering esquema SQLite interno Emdros (objetos, features, monads) de ETCBC4 / nestle1904 / jvulgate — `openEmdros`, `objectMonadSet`, `resolveFeatureValue` (enums/strings via tablas set), `getMonadRange`
+- [x] `src/lib/corpus/mql.ts`: traductor del subconjunto MQL usado por BibleOL (~30 patrones de Mod_askemdros/Dictionary) → SQL directo parametrizado — `createMql` (exec/execCommand, fast-path first/last + fallback monads con object_type_id), matchBlock/selectObjectsInMonadSet, features→enums, tipo OlSheaf/OlTable
+- [x] `src/lib/corpus/db-config.ts` (← Db_config + `*.db.json`): typeinfo parser (objectSettings, featuresetting, indirdb/sql_command para gloss/hint/glossurl), sentencegrammar, universeHierarchy, charSet, surfaceFeature; TypeInfo (JSON o desde MQL); addgloss_* (dbinfo/typeinfo/l10n por idioma de léxico); bol_db_localize con fallback a `<pr>.<lang>.prop.pretty.json`
+- [x] Property files: parser `property_files/*.lang.prop.pretty.json` (glosas 12 idiomas, emdrostype/grammargroup/grammarsubfeature/emdrosobject) + `ETCBC4_hints.db` / `ETCBC4_words.db` reutilizados tal cual (indirdb → `data/hints/`, `data/lexicons.db` espejo bol_lexicon)
+- [x] `find_monads`, `getMonadsAtLevel`, fullUniverse (← Mod_askemdros + Mql) — `src/lib/corpus/emdros.ts` (getEmdros, findMonads, dbAndBooks, shebanqLink)
+- [x] Tests de paridad: pasajes fijos (Gn 1:1-3, Jn 1:1, Jn 3:16) en los 3 corpora vs salida esperada — `tests/corpus/` (emdros/db-config/dictionary/mql + reader)
 
-## FASE 4 — Lector de texto (Ctrl_text, Dictionary)
-- [ ] `src/lib/reader/dictionary.ts` (← Dictionary.php server-side): monset sets, constructHierarchy, addMonadObject, getVisual, indirectLookup (gloss/hint/glossurl)
-- [ ] Rutas: `/text` (select_text: selección de texto/idioma), `/text/show` (show_text) — RSC
-- [ ] Componentes `src/components/reader/`: render por monadas con jerarquía oracional (frase/cláusula/subfrase), selección de palabra, glosas, hints, fonts SIL, transliteración, RTL/LTR, variantes
-- [ ] `src/components/reader/PassageTree.tsx` (← view_passage_tree_script + `*.bookorder` + jstree)
-- [ ] `src/components/reader/GrammarBox.tsx` (← GrammarSelectionBox TS + sentencegrammar)
-- [ ] Fonts: copiar SIL fonts → `public/fonts` + `view_font_css` + Ctrl_config::fonts
-- [ ] SHEBANQ link (← Mod_askemdros::shebanq_link)
+## FASE 4 — Lector de texto (Ctrl_text, Dictionary) [EN CURSO]
+- [x] `src/lib/corpus/dictionary.ts` (← Dictionary.php server-side): monset sets, constructHierarchy, addMonadObject, getVisual, indirectLookup (gloss/hint/glossurl), bcv/Patriarch, toJSON para el cliente
+- [x] Rutas: `/text` (select_text: selección de texto/idioma) y `/text/[db]/[book]/[chapter]/[vfrom]/[vto]` (show_text) — RSC — `src/app/text/`, `src/lib/services/corpus.ts` (showText/dbAndBooks)
+- [x] Render por monadas con jerarquía oracional (frase→sentence), numerado de versículos, glosas en tooltip, RTL/LTR (`<bdi>`) — `src/components/text/text-display.tsx`
+- [x] Clic en palabra → diálogo de información gramatical (port `toolTipFunc`/`clickForGrammar`) — `src/lib/reader/sentencegrammar.ts` (walkers + localización l10n/typeinfo), `src/lib/reader/grammar-info.ts`, `src/components/text/grammar-dialog.tsx`
+- [x] SHEBANQ link (← Mod_askemdros::shebanq_link)
+- [ ] Hints (bol_hint / ETCBC4_hints.db) en el diálogo de gramática
+- [ ] `src/components/text/GrammarBox.tsx` (← GrammarSelectionBox TS + sentencegrammar): cajas de gramática por frase/cláusula
+- [ ] `src/components/text/PassageTree.tsx` (← view_passage_tree_script + `*.bookorder` + jstree)
+- [ ] Fonts: copiar SIL fonts → `public/fonts` + `view_font_css` + Ctrl_config::fonts (clases foreign/transliterated reales)
 
 ## FASE 5 — Motor de quiz (Mod_askemdros + ts/ port)
 - [ ] `src/legacy-ts/`: port literal de `BibleOL/ts/*.ts` (util, configuration, charset, monadobject, displaymonadobject, sentencegrammar, dictionary, quizdata, panelquestion, quiz, grammarselectionbox, localization, stringwithsort, resizer, statistics) como módulos TS puros sin DOM

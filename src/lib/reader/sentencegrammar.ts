@@ -44,6 +44,29 @@ export interface ReaderSentenceGrammar {
   items?: GrammarSubItem[];
 }
 
+/** FeatureSetting del dbinfo (lo que usa la UI de texto). */
+export interface ReaderFeatureSetting {
+  foreignText?: boolean;
+  transliteratedText?: boolean;
+  isGloss?: boolean;
+  isDefault?: boolean;
+  ignoreSelect?: boolean;
+  ignoreShow?: boolean;
+  hideWord?: boolean;
+  hideValues?: string[];
+  fontsize?: string;
+  multiple?: boolean;
+  isRange?: boolean;
+  sqlargs?: string[];
+  indirdb?: string;
+}
+
+/** objectSettings del dbinfo tipado para la UI. */
+export type ReaderObjectSettings = Record<
+  string,
+  { featuresetting?: Record<string, ReaderFeatureSetting> }
+>;
+
 export type WalkFeatureNamesCb = (
   whattype: WHAT,
   objType: string,

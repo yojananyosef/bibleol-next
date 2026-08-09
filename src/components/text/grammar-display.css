@@ -1,0 +1,219 @@
+/*
+ * grammar-display.css — Port del bloque de gramática de BibleOL/styles/ol.css
+ * (líneas ~163-310): display de texto con gramática interlinear.
+ */
+
+.grammar-display {
+  font-family: var(--font-sans);
+}
+
+/* ── Palabras ─────────────────────────────────────────────────────────────── */
+
+.grammar-display .textdisplay {
+  margin-left: 0px;
+  margin-right: 0px;
+  vertical-align: bottom;
+  text-align: center;
+}
+
+.grammar-display.rtl .textdisplay {
+  margin-left: 0.5em;
+  margin-right: 0;
+}
+
+.grammar-display.ltr .textdisplay {
+  margin-left: 0;
+  margin-right: 0.5em;
+}
+
+.grammar-display .textblock {
+  display: inline;
+  vertical-align: text-top;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.grammar-display .textblock.inline {
+  display: inline;
+}
+
+.grammar-display .textblock.inlineblock {
+  display: inline-block;
+}
+
+.grammar-display span.verse {
+  vertical-align: top;
+  font-size: 12pt;
+  color: #002a3a;
+  font-weight: bold;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.grammar-display .colorized {
+  color: blue;
+}
+
+/* Espaciado de palabras concatenadas */
+.grammar-display .cont2:after {
+  content: "-";
+}
+
+.grammar-display .wordspace {
+  display: inline-block;
+}
+
+.grammar-display.rtl .cont1 {
+  margin-left: 0;
+}
+
+.grammar-display.rtl .cont2,
+.grammar-display.rtl .cont2x {
+  margin-left: 0.25em;
+  margin-right: 0.25em;
+}
+
+.grammar-display.ltr .cont1 {
+  margin-right: 0;
+}
+
+.grammar-display.ltr .cont2,
+.grammar-display.ltr .cont2x {
+  margin-right: 0.25em;
+  margin-left: 0.25em;
+}
+
+/* ── Gramática interlinear (wordgrammar) ──────────────────────────────────── */
+
+.grammar-display .dontshowit {
+  display: none;
+}
+
+.grammar-display .wordgrammar.showit {
+  display: block;
+  margin-right: 8px;
+  margin-left: 8px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  border-top: solid 1px #f2f2f2;
+  font-size: 10pt;
+}
+
+.grammar-display .wordgrammar.showit.tenpoint {
+  font-weight: 600;
+}
+
+.grammar-display .wordgrammar.showit.hebrew,
+.grammar-display .wordgrammar.showit.greek {
+  text-align: center;
+}
+
+.grammar-display .wordgrammar.showit.hebrew_translit {
+  text-align: center !important;
+  font-size: 1.3em;
+}
+
+/* ── Cajas (frases, cláusulas…) ───────────────────────────────────────────── */
+
+.grammar-display .lev3,
+.grammar-display .lev2,
+.grammar-display .lev1,
+.grammar-display .lev0 {
+  text-indent: 0;
+}
+
+.grammar-display .lev3.seplin,
+.grammar-display .lev2.seplin,
+.grammar-display .lev1.seplin,
+.grammar-display .lev0.seplin {
+  display: block;
+}
+
+.grammar-display .lev3.showborder,
+.grammar-display .lev2.showborder,
+.grammar-display .lev1.showborder,
+.grammar-display .lev0.showborder {
+  position: relative;
+  margin: 15px;
+  padding-top: 12px;
+  padding-bottom: 5px;
+  padding-left: 10px;
+  padding-right: 10px;
+  vertical-align: middle;
+}
+
+.grammar-display .lev3.showborder.noseplin,
+.grammar-display .lev2.showborder.noseplin,
+.grammar-display .lev1.showborder.noseplin,
+.grammar-display .lev0.showborder.noseplin {
+  display: inline-block;
+}
+
+.grammar-display .notdummy.lev3.showborder {
+  border: solid 2px #006187;
+}
+
+.grammar-display .notdummy.lev2.showborder {
+  border: solid 2px #c35cf4;
+}
+
+.grammar-display .notdummy.lev1.showborder {
+  border: solid 2px #43b02a;
+}
+
+.grammar-display.rtl .hasp {
+  border-right-style: none !important;
+}
+
+.grammar-display.rtl .hass {
+  border-left-style: none !important;
+}
+
+.grammar-display.ltr .hasp {
+  border-left-style: none !important;
+}
+
+.grammar-display.ltr .hass {
+  border-right-style: none !important;
+}
+
+/* Etiqueta del tipo de objeto (nombre corto + features) */
+.grammar-display .gram {
+  border: solid 1px #43b02a;
+  border-radius: 1px;
+  direction: ltr;
+  font-size: 10pt;
+  margin-left: 3px;
+  margin-right: 0px;
+  position: absolute;
+  padding-left: 2px;
+  padding-right: 2px;
+  background-color: white;
+  top: -10px;
+  text-indent: 0;
+}
+
+.grammar-display .gram.showit {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.grammar-display .xgrammar.showit {
+  display: inline;
+}
+
+/* Indicadores de sangría hebrea (clause_atom:tab) */
+.grammar-display .indentation {
+  font-family: courier, monospace;
+}
+
+/* Sangría de cláusulas ETCBC4 cuando el tab está activado (ver grammar-box.tsx) */
+.grammar-display.etcb4-tab .lev2 {
+  padding-left: var(--indent-w, 0px);
+  text-indent: calc(-1 * var(--indent-w, 0px));
+}
+
+.grammar-display.rtl.etcb4-tab .lev2 {
+  padding-left: 0;
+  padding-right: var(--indent-w, 0px);
+}

@@ -6,6 +6,9 @@ import type { ReaderL10n, ReaderSentenceGrammar } from "@/lib/reader/sentencegra
 import { enhanceSentenceGrammar } from "@/lib/reader/sentencegrammar";
 import { getSentenceGrammarFor } from "@/lib/reader/sentencegrammar";
 import { grammarInfoTable, type GrammarInfoRow } from "@/lib/reader/grammar-info";
+import { buildDisplayTree, buildGrammarPanel, type GrammarPanelLevel } from "@/lib/reader/display";
+import { makeCharset } from "@/lib/reader/charset";
+import { GrammarBox } from "@/components/text/grammar-box";
 import { GrammarDialog } from "@/components/text/grammar-dialog";
 
 export interface TextDisplayProps {
@@ -23,6 +26,7 @@ export interface TextDisplayProps {
     objectSettings: Record<string, { featuresetting?: Record<string, { foreignText?: boolean; transliteratedText?: boolean }> }>;
     objHasSurface: string;
     surfaceFeature: string;
+    charSet: string;
   };
   l10n: ReaderL10n;
   typeinfo: { obj2feat: Record<string, Record<string, string>> };
@@ -51,8 +55,25 @@ function contains(monads: string, monad: number): boolean {
 
 export function TextDisplay({ db, bookTitle, dictionary, shebanq_link, dbinfo, l10n, typeinfo }: TextDisplayProps) {
   const [selected, setSelected] = useState<{ heading: string; rows: GrammarInfoRow[] } | null>(null);
+  const [view, setView] = useState<"text" | "grammar">("text");
 
   const grammar = useMemo(() => enhanceSentenceGrammar(dbinfo.sentencegrammar), [dbinfo.sentencegrammar]);
+  const charset = useMemo(() => makeCharset(dbinfo.charSet), [dbinfo.charSet]);
+
+  const tree = useMemo(
+    () =>
+      buildDisplayTree(dictionary, {
+        grammar,
+        l10n,
+        typeinfo,
+        objectSettings: dbinfo.objectSettings,
+        charset,
+        databaseName: db,
+      }),
+    [dictionary, grammar, l10n, typeinfo, dbinfo.objectSettings, charset, db],
+  );
+
+  const panel: GrammarPanelLevel[] = useMemo(() => buildGrammarPanel(grammar, l10n, charset, db), [grammar, l10n, charset, db]);
 
   const words = useMemo(() => {
     const level0 = dictionary.monadObjects.find((l) => l.level === 0)?.objects ?? [];
@@ -124,7 +145,31 @@ export function TextDisplay({ db, bookTitle, dictionary, shebanq_link, dbinfo, l
     <div className="space-y-4" dir="auto">
       <header className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-lg font-semibold">{bookTitle}</h1>
-        <div className="flex gap-3 text-sm">
+        <div className="flex items-center gap-3 text-sm">
+          <div className="flex rounded-lg border p-0.5">
+            <button
+              type="button"
+              onClick={() => setView("text")}
+              className={
+                view === "text"
+                  ? "rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground"
+                  : "rounded-md px-2 py-0.5 text-muted-foreground hover:text-foreground"
+              }
+            >
+              Text
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("grammar")}
+              className={
+                view === "grammar"
+                  ? "rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground"
+                  : "rounded-md px-2 py-0.5 text-muted-foreground hover:text-foreground"
+              }
+            >
+              Grammar
+            </button>
+          </div>
           {shebanq_link && (
             <a href={shebanq_link} target="_blank" rel="noreferrer" className="text-primary underline-offset-4 hover:underline">
               SHEBANQ
@@ -136,30 +181,46 @@ export function TextDisplay({ db, bookTitle, dictionary, shebanq_link, dbinfo, l
         </div>
       </header>
 
-      {verses.map((paragraphs, si) => (
-        <section key={si} className="rounded border p-4">
-          {paragraphs.map((p, vi) => (
-            <p key={vi} className="text-lg leading-relaxed">
-              {p.showVerse && <sup className="mr-1 text-sm text-muted-foreground">{p.verse}</sup>}
-              {p.words.map((w, wi) => {
-                const title = glossTitle(w);
-                return (
-                  <button
-                    key={wi}
-                    type="button"
-                    title={title || undefined}
-                    className="cursor-help rounded px-0.5 hover:bg-accent hover:text-accent-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    onClick={() => openGrammar(w)}
-                  >
-                    <bdi>{w.text}</bdi>
-                    {w.suffix}
-                  </button>
-                );
-              })}
-            </p>
-          ))}
-        </section>
-      ))}
+      {view === "grammar" ? (
+        <GrammarBox
+          db={db}
+          tree={tree}
+          panel={panel}
+          charset={charset}
+          databaseName={db}
+          grammar={grammar}
+          l10n={l10n}
+          typeinfo={typeinfo}
+          objectSettings={dbinfo.objectSettings}
+          objHasSurface={dbinfo.objHasSurface}
+          surfaceFeature={dbinfo.surfaceFeature}
+        />
+      ) : (
+        verses.map((paragraphs, si) => (
+          <section key={si} className="rounded border p-4">
+            {paragraphs.map((p, vi) => (
+              <p key={vi} className="text-lg leading-relaxed">
+                {p.showVerse && <sup className="mr-1 text-sm text-muted-foreground">{p.verse}</sup>}
+                {p.words.map((w, wi) => {
+                  const title = glossTitle(w);
+                  return (
+                    <button
+                      key={wi}
+                      type="button"
+                      title={title || undefined}
+                      className="cursor-help rounded px-0.5 hover:bg-accent hover:text-accent-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      onClick={() => openGrammar(w)}
+                    >
+                      <bdi>{w.text}</bdi>
+                      {w.suffix}
+                    </button>
+                  );
+                })}
+              </p>
+            ))}
+          </section>
+        ))
+      )}
 
       <GrammarDialog
         open={selected !== null}

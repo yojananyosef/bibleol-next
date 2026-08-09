@@ -37,6 +37,11 @@ export interface MonadObjectJSON {
   monads: string;
   features: Record<string, string> | null;
   children_idds: number[] | null;
+  /**
+   * Solo objetos "multiple": features del primer subobjeto de cada segmento
+   * (legacy: `subobjects[mix][0].features`; usado p.ej. para clause_atom:tab).
+   */
+  subobjects?: Record<string, string>[] | null;
   text?: string;
   suffix?: string;
   bcv?: (string | number)[];
@@ -408,6 +413,11 @@ export class Dictionary {
       features: mo.get_mo().get_features(),
       children_idds: mo.children_idds,
     };
+    if (mo instanceof MultipleMonadObject) {
+      // El legacy usa subobjects[mix][0].features (el primer subobjeto de cada
+      // segmento) para las features de subobjeto (p.ej. clause_atom:tab).
+      base.subobjects = (mo.subobjects ?? []).map((seg) => seg[0]?.get_features() ?? {});
+    }
     if (mo instanceof SingleMonadObject) {
       base.text = mo.text;
       base.suffix = mo.suffix;

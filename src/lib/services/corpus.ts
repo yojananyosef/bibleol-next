@@ -6,7 +6,7 @@
 
 import { getEmdros, findMonads, dbAndBooks, shebanqLink, type DbBooks } from "@/lib/corpus/emdros";
 import { Dictionary, type MonadObjectJSON } from "@/lib/corpus/dictionary";
-import type { ReaderL10n, ReaderSentenceGrammar } from "@/lib/reader/sentencegrammar";
+import type { ReaderL10n, ReaderObjectSettings, ReaderSentenceGrammar } from "@/lib/reader/sentencegrammar";
 import { Picdb } from "@/lib/corpus/picdb";
 import { getAppDb } from "@/lib/db/sqlite";
 
@@ -24,9 +24,11 @@ export interface ShowTextResult {
   /** Dbinfo/l10n/typeinfo parseados para la UI (sentencegrammar, settings). */
   reader: {
     sentencegrammar: ReaderSentenceGrammar[];
-    objectSettings: Record<string, { featuresetting?: Record<string, { foreignText?: boolean; transliteratedText?: boolean }> }>;
+    objectSettings: ReaderObjectSettings;
     objHasSurface: string;
     surfaceFeature: string;
+    suffixFeature: string | null;
+    charSet: string;
     l10n: ReaderL10n;
     typeinfo: { obj2feat: Record<string, Record<string, string>> };
   };
@@ -67,9 +69,11 @@ export function showText(
 
   const dbinfoParsed = JSON.parse(handle.dbconfig.dbinfo_json) as {
     sentencegrammar: ReaderSentenceGrammar[];
-    objectSettings: Record<string, { featuresetting?: Record<string, { foreignText?: boolean; transliteratedText?: boolean }> }>;
+    objectSettings: ReaderObjectSettings;
     objHasSurface: string;
     surfaceFeature: string;
+    suffixFeature: string | null;
+    charSet: string;
   };
   const typeinfoParsed = JSON.parse(handle.dbconfig.typeinfo_json) as { obj2feat: Record<string, Record<string, string>> };
   const l10nParsed = JSON.parse(handle.dbconfig.l10n_json) as ReaderL10n;
@@ -87,6 +91,8 @@ export function showText(
       objectSettings: dbinfoParsed.objectSettings,
       objHasSurface: dbinfoParsed.objHasSurface,
       surfaceFeature: dbinfoParsed.surfaceFeature,
+      suffixFeature: dbinfoParsed.suffixFeature ?? null,
+      charSet: dbinfoParsed.charSet,
       l10n: l10nParsed,
       typeinfo: typeinfoParsed,
     },
