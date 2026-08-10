@@ -53,10 +53,9 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
 - [x] Render por monadas con jerarquía oracional (frase→sentence), numerado de versículos, glosas en tooltip, RTL/LTR (`<bdi>`) — `src/components/text/text-display.tsx`
 - [x] Clic en palabra → diálogo de información gramatical (port `toolTipFunc`/`clickForGrammar`) — `src/lib/reader/sentencegrammar.ts` (walkers + localización l10n/typeinfo), `src/lib/reader/grammar-info.ts`, `src/components/text/grammar-dialog.tsx`
 - [x] SHEBANQ link (← Mod_askemdros::shebanq_link)
-- [ ] Hints (bol_hint / ETCBC4_hints.db) en el diálogo de gramática
-- [ ] `src/components/text/GrammarBox.tsx` (← GrammarSelectionBox TS + sentencegrammar): cajas de gramática por frase/cláusula
-- [ ] `src/components/text/PassageTree.tsx` (← view_passage_tree_script + `*.bookorder` + jstree)
-- [ ] Fonts: copiar SIL fonts → `public/fonts` + `view_font_css` + Ctrl_config::fonts (clases foreign/transliterated reales)
+- [x] Hints: infraestructura indirdb portada (→ `src/lib/corpus/lexicon.ts`, `ETCBC4_hints.db` vía `data/hints/`); la feature `hint` solo se usa en el quiz (featType 'hint' de panelquestion.ts) → se completa en Fase 5 (el diálogo de gramática legacy NO muestra hints)
+- [x] GrammarBox (← GrammarSelectionBox TS + displaymonadobject): vista de gramática con cajas por frase/cláusula — `src/lib/reader/display.ts` (árbol DisplayMonadObject 1:1: segmentos hasp/hass, dummy, Patriarch, wordgrammar, clause_atom:tab, indentationIndicator), `src/components/text/grammar-box.tsx` (FollowerBox border/seplin/wordspace implícitos, adjustDivLevWidth, sangría ETCBC4, sessionStorage por db), `src/components/text/grammar-panel.tsx` (checkboxes por nivel con grupos, color-limit, clear), `src/components/text/grammar-display.css` (port ol.css); toggle Text/Grammar en text-display; tests `tests/reader/display.test.ts` (7)
+- [x] Fonts: SIL/CLM webfonts → `public/fonts/` (woff/ttf, titillium con woff2) + `src/app/fonts.css` (port styles/fonts.css, @font-face modernos) + `src/lib/reader/font-css.ts` (port view_font_css.php: clases `.hebrew/.greek/…` con font-family/direction y estilos textdisplay/wordgrammar/tooltip/input) + `src/lib/services/config.ts` (← Mod_config: alphabets, font_setting con fallback user_id=0, avail_fonts, personal_font, set_font, font_selection) + `/settings/fonts` (← Ctrl_config::fonts + view_font_settings: tabs por alfabeto, radio de fuentes + personal, bold/italic/size por estilo, server action save) + clases foreign/transliterated reales en palabras (`textdisplay ${charset.foreignClass}`) y font CSS por usuario inyectado en `/text/[...parts]`; tests `tests/config.test.ts` (8)
 
 ## FASE 5 — Motor de quiz (Mod_askemdros + ts/ port)
 - [ ] `src/legacy-ts/`: port literal de `BibleOL/ts/*.ts` (util, configuration, charset, monadobject, displaymonadobject, sentencegrammar, dictionary, quizdata, panelquestion, quiz, grammarselectionbox, localization, stringwithsort, resizer, statistics) como módulos TS puros sin DOM
@@ -64,6 +63,7 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
 - [ ] `src/lib/quiz/template-parser.ts`: parser `.3et` XML con sax (questiontemplate v1/v3, sentenceselection, featurehandlers, quizfeatures, paths)
 - [ ] `src/lib/services/text-quiz.ts` (← Mod_askemdros): show_quiz/new_quiz/edit_quiz, parseQuiz/decodeQuiz, show_test_quiz, package/save_quiz, get_quiz_universe, db_and_books
 - [ ] Rutas: `/quiz` (select_quiz), `/quiz/run` (show_quiz), `/quiz/test`, `/quiz/editor` (edit_quiz/new_quiz), `/quiz/universe` (show_quiz_univ, add_universe_level)
+- [ ] `src/components/quiz/PassageTree.tsx` (← view_passage_tree_script + `Universe_tree` expand_level + `*.bookorder` + jstree): árbol de pasajes para selección de quiz y editor
 - [ ] `src/components/quiz/QuizRunner.tsx`: envoltura React del port `Quiz`/`PanelQuestion` (flujo next/prev/finish, progress, timer, exam_mode)
 - [ ] `src/components/quiz/PanelTemplate*.tsx` (← paneltemplmql/quizfeatures/quizobjectselector/sentenceselector)
 - [ ] Server Action `update_stat` (← Ctrl_statistics::update_stat + Mod_statistics endQuiz): escribe bol_sta_quiz/bol_sta_question/bol_sta_requestfeature/bol_sta_displayfeature + grading flag

@@ -208,7 +208,7 @@ export function TextDisplay({ db, bookTitle, dictionary, shebanq_link, dbinfo, l
                       key={wi}
                       type="button"
                       title={title || undefined}
-                      className="cursor-help rounded px-0.5 hover:bg-accent hover:text-accent-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      className={`textdisplay ${charset.foreignClass} cursor-help rounded px-0.5 hover:bg-accent hover:text-accent-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-ring`}
                       onClick={() => openGrammar(w)}
                     >
                       <bdi>{w.text}</bdi>

@@ -35,6 +35,9 @@ export default async function Home() {
               <Link href="/profile" className="text-primary underline-offset-4 hover:underline">
                 Profile
               </Link>
+              <Link href="/settings/fonts" className="text-primary underline-offset-4 hover:underline">
+                Fonts
+              </Link>
               <LogoutButton />
             </>
           ) : (

@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import { showText, TextError } from "@/lib/services/corpus";
 import { sessionLanguage } from "@/lib/auth/guards";
+import { getSession } from "@/lib/auth/session";
+import { fontSelection } from "@/lib/services/config";
+import { buildFontCss } from "@/lib/reader/font-css";
 import { TextDisplay } from "@/components/text/text-display";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +28,9 @@ export default async function PassagePage({
   if (vtoStr && (!Number.isInteger(vto) || vto <= 0)) notFound();
 
   let language = await sessionLanguage();
+  const session = await getSession();
+  const fonts = fontSelection(session?.userId ?? 0);
+  const fontCss = buildFontCss(fonts);
   let result;
   try {
     result = showText(db, book, chapter, vfrom, vto, language, icons === "on");
@@ -51,6 +57,7 @@ export default async function PassagePage({
 
   return (
     <main className="flex flex-1 justify-center p-6">
+      <style dangerouslySetInnerHTML={{ __html: fontCss }} />
       <div className="w-full max-w-3xl">
         <TextDisplay
           db={db}
