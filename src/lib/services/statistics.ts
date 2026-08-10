@@ -105,6 +105,12 @@ export interface EndQuizPayload {
   questions: EndQuizQuestion[];
 }
 
+function isTrue(v: boolean | string | undefined): boolean {
+  // El legacy (PHP) compara con =='true' porque jQuery serializa booleanos
+  // como "true"/"false"; por JSON llegan booleanos reales.
+  return v === true || v === "true";
+}
+
 /**
  * endQuiz(): procesa las estadísticas enviadas al final de un quiz.
  * Port 1:1 de Mod_statistics::endQuiz (mismo ajuste de tiempos, misma
@@ -174,7 +180,7 @@ export function endQuiz(userid: number, payload: EndQuizPayload): void {
             reqFeat.names[featno] ?? "",
             val,
             reqFeat.users_answer[ix] ?? "",
-            reqFeat.users_answer_was_correct[ix] === true ? 1 : 0,
+            isTrue(reqFeat.users_answer_was_correct[ix]) ? 1 : 0,
             userid,
           );
           ++ix;
