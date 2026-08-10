@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { addUniverseLevel } from "@/lib/services/text-quiz";
-import { sessionLanguage } from "@/lib/auth/guards";
 
 export const dynamic = "force-dynamic";
 

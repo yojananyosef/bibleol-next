@@ -8,12 +8,13 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import { getEmdros, type CorpusHandle } from "../corpus/emdros.ts";
 import { Dictionary, type DictionaryParams } from "../corpus/dictionary.ts";
 import type { Dbinfo } from "../corpus/db-config.ts";
 import { OlMonadSet } from "../corpus/monads.ts";
 import type { OlSheaf } from "../corpus/sheaf.ts";
-import { getAppDb } from "../db/sqlite.ts";
+import { getAppDb, QUIZZES_DIR } from "../db/sqlite.ts";
 import { harvest, featHandToMql, type QuizTemplate } from "../quiz/template-parser.ts";
 import { writeQuizTemplateXml, type DbinfoForWriter } from "../quiz/template-writer.ts";
 import { QuizData } from "../quiz/quiz-data.ts";
@@ -30,11 +31,19 @@ type L10nUniverse = Record<string, Record<string, string>>;
 // Ficheros de quiz
 // ---------------------------------------------------------------------------
 
+/**
+ * Resuelve una ruta de quiz relativa contra QUIZZES_DIR (las URLs y los
+ * enlaces del navegador usan rutas relativas como "ETCBC4/demo/demo1.3et").
+ */
+export function resolveQuizFile(filename: string): string {
+  return path.isAbsolute(filename) ? filename : path.join(QUIZZES_DIR, filename);
+}
+
 /** Lee el .3et y lanza QuizError('cannot_open_file') si no existe. */
 export function readQuizFile(filename: string): string {
   let contents: string;
   try {
-    contents = readFileSync(filename, "utf8");
+    contents = readFileSync(resolveQuizFile(filename), "utf8");
   } catch {
     throw new QuizError("cannot_open_file");
   }
@@ -478,6 +487,16 @@ export function showQuizUniverse(quizFile: string, everythingLabel: string): {
     l10n_json: handle.dbconfig.l10n_json,
     typeinfo_json: handle.dbconfig.typeinfo_json,
   };
+}
+
+/** universe_for(): árbol de universo de un corpus para el editor (marcado campaña vacío). */
+export function universeFor(db: string, markedList: string[], everythingLabel: string): { tree_data: string; prop: string } {
+  const handle = getEmdros(db);
+  const tree = new UniverseTree(
+    { markedList },
+    { handle, dbinfo: JSON.parse(handle.dbconfig.dbinfo_json) as Dbinfo, everythingLabel, l10nUniverse: l10nUniverseOf(handle) },
+  );
+  return { tree_data: tree.get_jstree(), prop: handle.prop };
 }
 
 /**

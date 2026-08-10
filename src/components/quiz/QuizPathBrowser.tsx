@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
-export function QuizPathBrowser({ root }: { root: string }) {
+export function QuizPathBrowser({ root, defaultDb, teacher }: { root: string; defaultDb?: string; teacher?: boolean }) {
   const [dir, setDir] = useState(root);
   const [listing, setListing] = useState<DirList | null>(null);
   const [count, setCount] = useState("10");
@@ -37,9 +37,16 @@ export function QuizPathBrowser({ root }: { root: string }) {
   return (
     <Card>
       <CardContent className="pt-6">
-        <p className="mb-2 text-sm text-muted-foreground">
-          {dir === "" ? "/" : dir}
-        </p>
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">{dir === "" ? "/" : dir}</p>
+          {teacher && defaultDb ? (
+            <Link href={`/quiz/editor?dir=${encodeURIComponent(dir)}&db=${encodeURIComponent(defaultDb)}`}>
+              <Button type="button" size="sm" variant="outline">
+                New exercise
+              </Button>
+            </Link>
+          ) : null}
+        </div>
         <ul className="mb-4 divide-y rounded border">
           {listing?.parentdir !== null && listing?.parentdir !== undefined ? (
             <li>
@@ -84,6 +91,13 @@ export function QuizPathBrowser({ root }: { root: string }) {
                   Start
                 </Button>
               </Link>
+              {teacher ? (
+                <Link href={`/quiz/editor?quiz=${encodeURIComponent(`${dir}${dir ? "/" : ""}${f.filename}`)}`}>
+                  <Button type="button" size="sm" variant="outline">
+                    Edit
+                  </Button>
+                </Link>
+              ) : null}
             </li>
           ))}
           {pending && !listing ? <li className="px-3 py-2 text-sm text-muted-foreground">Loading…</li> : null}

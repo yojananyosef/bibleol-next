@@ -5,17 +5,21 @@
 // /quiz/universe-level; recoge los nodos marcados y arranca el quiz con la
 // selección.
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 export interface PassageTreeProps {
-  quizPath: string;
-  count: number;
+  /** Solo se usan en modo ejecución (el editor no arranca quizzes). */
+  quizPath?: string;
+  count?: number;
   treeJson: string;
   markedList: string[];
   prop: string;
+  /** Modo editor: sin barra de acciones y con callback de refs marcadas. */
+  editorMode?: boolean;
+  onRefsChange?: (refs: string[]) => void;
 }
 
 interface NodeItem {
@@ -25,7 +29,7 @@ interface NodeItem {
   children?: NodeItem[];
 }
 
-export function PassageTree({ quizPath, count, treeJson, markedList, prop }: PassageTreeProps) {
+export function PassageTree({ quizPath, count, treeJson, markedList, prop, editorMode, onRefsChange }: PassageTreeProps) {
   const tree = JSON.parse(treeJson) as NodeItem;
   const [checked, setChecked] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
@@ -134,13 +138,26 @@ export function PassageTree({ quizPath, count, treeJson, markedList, prop }: Pas
     );
   };
 
+  // En modo editor, el tree solo reporta las refs marcadas (data-ref): 1:1 con
+  // el jstree get_checked del editor legacy.
+  useEffect(() => {
+    if (editorMode && onRefsChange) {
+      onRefsChange(
+        Object.entries(checked)
+          .filter(([k, v]) => v && k.length > 0)
+          .map(([k]) => k),
+      );
+    }
+  }, [checked, editorMode, onRefsChange]);
+
   return (
     <Card>
       <CardContent className="pt-6">
         <div className="mb-4 max-h-[50vh] overflow-auto rounded border p-3">
           <ul>{renderNode(tree, 0)}</ul>
         </div>
-        <div className="flex items-center justify-between gap-3">
+        {editorMode ? null : (
+          <div className="flex items-center justify-between gap-3">
           <div className="flex gap-2">
             <Button
               type="button"
@@ -163,13 +180,14 @@ export function PassageTree({ quizPath, count, treeJson, markedList, prop }: Pas
             </Button>
           </div>
           <Link
-            href={`/quiz/run?quiz=${encodeURIComponent(quizPath)}&count=${count}&selection=${selectedPaths.join(",")}`}
+            href={`/quiz/run?quiz=${encodeURIComponent(quizPath ?? "")}&count=${count ?? 0}&selection=${selectedPaths.join(",")}`}
           >
             <Button type="button" disabled={selectedPaths.length === 0}>
               Start quiz ({selectedPaths.length})
             </Button>
           </Link>
-        </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
