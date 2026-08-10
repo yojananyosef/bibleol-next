@@ -273,7 +273,7 @@ export class Dictionary {
    * Look up a feature outside Emdros (gloss, hint, urls…).
    * Las features de $mo están codificadas con htmlspecialchars.
    */
-  private indirectLookup(feat: string, mo: OlMatchedObject, fset: IndirectFsetting, test_glosslimit: boolean): void {
+  public indirectLookup(feat: string, mo: OlMatchedObject, fset: IndirectFsetting, test_glosslimit: boolean): void {
     const value = this.indirect.lookup(feat, mo.features ?? {}, fset, this.glosslimit, test_glosslimit);
     mo.set_feature_raw(feat, String(value));
   }
@@ -389,18 +389,24 @@ export class Dictionary {
     bookTitle: string | number | null;
     sentenceSets: string[];
     sentenceSetsQuiz: string[] | null;
-    monadObjects: { level: number; objects: MonadObjectJSON[] }[];
+    monadObjects: { level: number; objects: MonadObjectJSON[] }[][];
   } {
-    const levels: { level: number; objects: MonadObjectJSON[] }[] = [];
-    for (let level = 0; level < this.maxLevels; ++level) {
-      const objects = this.monadObjects[0][level].map((mo) => this.serializeMonadObject(mo));
-      levels.push({ level, objects });
+    // monadObjects[índice de conjunto de frases][nivel] — como el legacy
+    // (Dictionary.php: monadObjects[$msetIndex][$level][]).
+    const sets: { level: number; objects: MonadObjectJSON[] }[][] = [];
+    for (let setIndex = 0; setIndex < this.sentenceSets.length; ++setIndex) {
+      const levels: { level: number; objects: MonadObjectJSON[] }[] = [];
+      for (let level = 0; level < this.maxLevels; ++level) {
+        const objects = this.monadObjects[setIndex][level].map((mo) => this.serializeMonadObject(mo));
+        levels.push({ level, objects });
+      }
+      sets.push(levels);
     }
     return {
       bookTitle: this.bookTitle,
       sentenceSets: this.sentenceSets.map((ms) => ms.toString()),
       sentenceSetsQuiz: this.sentenceSetsQuiz?.map((ms) => ms.toString()) ?? null,
-      monadObjects: levels,
+      monadObjects: sets,
     };
   }
 

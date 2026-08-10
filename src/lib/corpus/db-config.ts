@@ -141,6 +141,16 @@ export interface FeatureSetting {
   multiple?: boolean;
   fontsize?: string;
   matchregexp?: string;
+  /* Campos de quiz (Quiz_data.php / ExtendedQuizFeatures) */
+  isVisual?: boolean;
+  isEnum?: boolean;
+  hideWord?: boolean;
+  foreignText?: boolean;
+  usedropdown?: boolean;
+  alternateshowrequestDb?: string;
+  alternateshowrequestSql?: string;
+  showdefault?: string | null;
+  isDefault?: boolean;
 }
 
 export interface UniverseLevel {
@@ -156,6 +166,7 @@ export interface Dbinfo {
   surfaceFeature: string;
   suffixFeature?: string;
   objHasSurface: string;
+  charSet?: string;
   sentencegrammar: SentenceGrammar[];
   universeHierarchy: UniverseLevel[];
   objectSettings: Record<string, { featuresetting?: Record<string, FeatureSetting> }>;

@@ -59,9 +59,9 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
 
 ## FASE 5 — Motor de quiz (Mod_askemdros + ts/ port)
 - [ ] `src/legacy-ts/`: port literal de `BibleOL/ts/*.ts` (util, configuration, charset, monadobject, displaymonadobject, sentencegrammar, dictionary, quizdata, panelquestion, quiz, grammarselectionbox, localization, stringwithsort, resizer, statistics) como módulos TS puros sin DOM
-- [ ] `src/lib/quiz/` (← Quiz_data.php, Suggest_answers, Universe_tree, ExtendedQuizFeatures): features show/request, pseudofeatures, glosslimit, virtualkeyboard, dropdown
-- [ ] `src/lib/quiz/template-parser.ts`: parser `.3et` XML con sax (questiontemplate v1/v3, sentenceselection, featurehandlers, quizfeatures, paths)
-- [ ] `src/lib/services/text-quiz.ts` (← Mod_askemdros): show_quiz/new_quiz/edit_quiz, parseQuiz/decodeQuiz, show_test_quiz, package/save_quiz, get_quiz_universe, db_and_books
+- [x] `src/lib/quiz/` (← Quiz_data.php, Suggest_answers, Universe_tree, ExtendedQuizFeatures): `quiz-data.ts` (Quiz_data/getNextCandidate/fetchBookLimit, ExtendedQuizFeatures), `suggest.ts` (Suggest_answers), `universe-tree.ts` (Universe_tree + TreeNode jstree: get_jstree/expandLevel/searchMarked)
+- [x] `src/lib/quiz/template-parser.ts`: parser `.3et` XML con sax (questiontemplate v1/v3, sentenceselection, featurehandlers, quizfeatures, paths)
+- [x] `src/lib/services/text-quiz.ts` (← Mod_askemdros): **hecho** — show_quiz (payload 1:1 view_text_display: quizData_json/dictionaries_json/dbinfo/l10n/l10n_js/typeinfo, useTooltip←bol_userconfig, time_seconds←bol_exerciseowner), get_quiz_universe, add_universe_level, parseQuiz/parseQuizBasic/decodeQuiz/parsePath/strip_monads, new_quiz (JSON por defecto), edit_quiz, show_test_quiz, package_test_quiz/save_quiz (vía `src/lib/quiz/template-writer.ts`, port de Template::writeAsXml + MqlData + FeatureHandlerList + 6 handlers + QuizFeatures; round-trip de los .3et demo verificado)
 - [ ] Rutas: `/quiz` (select_quiz), `/quiz/run` (show_quiz), `/quiz/test`, `/quiz/editor` (edit_quiz/new_quiz), `/quiz/universe` (show_quiz_univ, add_universe_level)
 - [ ] `src/components/quiz/PassageTree.tsx` (← view_passage_tree_script + `Universe_tree` expand_level + `*.bookorder` + jstree): árbol de pasajes para selección de quiz y editor
 - [ ] `src/components/quiz/QuizRunner.tsx`: envoltura React del port `Quiz`/`PanelQuestion` (flujo next/prev/finish, progress, timer, exam_mode)
@@ -69,7 +69,7 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
 - [ ] Server Action `update_stat` (← Ctrl_statistics::update_stat + Mod_statistics endQuiz): escribe bol_sta_quiz/bol_sta_question/bol_sta_requestfeature/bol_sta_displayfeature + grading flag
 - [ ] `src/components/quiz/VirtualKeyboard.tsx` (hebreo IL Biblical Hebrew SIL / griego polytonic)
 - [ ] Editor de ejercicios (← editquiz.ts port + view_edit_quiz)
-- [ ] Tests: paridad de evaluación de respuestas vs exercise_model original
+- [x] Tests: paridad de evaluación de respuestas vs exercise_model original (`tests/quiz/text-quiz.test.ts` 5/5: payload showQuiz sin login, QuizError, árbol universo, expandLevel, getTimeSeconds) + `tests/quiz/template-writer.test.ts` (6: round-trip XML de todos los .3et demo, MQL directo, orden de requestFeatures, package/save a fichero, error de escritura, newQuiz)
 
 ## FASE 6 — Clases y ejercicios (Ctrl_classes, Ctrl_userclass, Mod_quizpath)
 - [ ] `src/lib/services/classes.ts` (← Mod_classes + Ctrl_classes): CRUD, change_owner, delete_class, add_one_grader, edit_one_class, enrol_before

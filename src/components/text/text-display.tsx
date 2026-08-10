@@ -18,7 +18,7 @@ export interface TextDisplayProps {
     bookTitle: string | number | null;
     sentenceSets: string[];
     sentenceSetsQuiz: string[] | null;
-    monadObjects: { level: number; objects: MonadObjectJSON[] }[];
+    monadObjects: { level: number; objects: MonadObjectJSON[] }[][];
   };
   shebanq_link: string | null;
   dbinfo: {
@@ -76,7 +76,7 @@ export function TextDisplay({ db, bookTitle, dictionary, shebanq_link, dbinfo, l
   const panel: GrammarPanelLevel[] = useMemo(() => buildGrammarPanel(grammar, l10n, charset, db), [grammar, l10n, charset, db]);
 
   const words = useMemo(() => {
-    const level0 = dictionary.monadObjects.find((l) => l.level === 0)?.objects ?? [];
+    const level0 = dictionary.monadObjects[0].find((l) => l.level === 0)?.objects ?? [];
     return level0
       .filter((o): o is MonadObjectJSON & { monads: string } => o.kind === "single")
       .map((o) => ({
@@ -91,7 +91,7 @@ export function TextDisplay({ db, bookTitle, dictionary, shebanq_link, dbinfo, l
 
   // Nivel 3 (sentence): agrupamos las palabras por frase para párrafos
   const sentences = useMemo(() => {
-    const level3 = dictionary.monadObjects.find((l) => l.level === 3)?.objects ?? [];
+    const level3 = dictionary.monadObjects[0].find((l) => l.level === 3)?.objects ?? [];
     const groups: { monads: string; words: Word[] }[] = [];
     for (const s of level3) {
       groups.push({ monads: s.monads, words: words.filter((w) => contains(s.monads, w.monad)) });

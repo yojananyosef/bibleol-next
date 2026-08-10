@@ -127,7 +127,7 @@ interface WordSpec {
   features: Record<string, string>;
 }
 
-function dictFromSpecs(words: WordSpec[]): { monadObjects: { level: number; objects: MonadObjectJSON[] }[] } {
+function dictFromSpecs(words: WordSpec[]): { monadObjects: { level: number; objects: MonadObjectJSON[] }[][] } {
   const wordObjects = words.map((w) => ({
     kind: "single" as const,
     id_d: 1000 + w.monad,
@@ -140,7 +140,7 @@ function dictFromSpecs(words: WordSpec[]): { monadObjects: { level: number; obje
     bcv: [1, 1, w.verse],
     sameAsPrev: w.sameAsPrev,
   }));
-  return { monadObjects: [{ level: 0, objects: wordObjects }, { level: 1, objects: [] }, { level: 2, objects: [] }, { level: 3, objects: [] }, { level: 4, objects: [] }] };
+  return { monadObjects: [[{ level: 0, objects: wordObjects }, { level: 1, objects: [] }, { level: 2, objects: [] }, { level: 3, objects: [] }, { level: 4, objects: [] }]] };
 }
 
 function opts() {
@@ -203,13 +203,13 @@ test("árbol sintético: jerarquía, hasp/hass, dummy y verse", () => {
   ]);
 
   // phrase 1: monads 1-2; dummy phrase para el monad 3; phrase 2: monads 5-6
-  dict.monadObjects[1].objects = [
+  dict.monadObjects[0][1].objects = [
     { kind: "multiple", id_d: 2001, name: "phrase", monads: "{ 1-2 }", features: { typ: "D", function: "S", det: "", rela: "x" }, children_idds: [1001, 1002] },
     { kind: "multiple", id_d: 2999, name: "dummy", monads: "{ 3 }", features: null, children_idds: [1003] },
     { kind: "multiple", id_d: 2002, name: "phrase", monads: "{ 5-6 }", features: { typ: "N", function: "Subj", det: "D", rela: "" }, children_idds: [1005, 1006] },
   ];
   // cláusula dividida en dos segmentos (gap en el monad 4)
-  dict.monadObjects[2].objects = [
+  dict.monadObjects[0][2].objects = [
     {
       kind: "multiple",
       id_d: 3001,
@@ -222,10 +222,10 @@ test("árbol sintético: jerarquía, hasp/hass, dummy y verse", () => {
     // constructHierarchy crea un dummy por nivel para los huérfanos (monad 3)
     { kind: "multiple", id_d: 3999, name: "dummy", monads: "{ 3 }", features: null, children_idds: [2999] },
   ];
-  dict.monadObjects[3].objects = [
+  dict.monadObjects[0][3].objects = [
     { kind: "multiple", id_d: 4001, name: "sentence", monads: "{ 1-6 }", features: {}, children_idds: [3001, 3999] },
   ];
-  dict.monadObjects[4].objects = [
+  dict.monadObjects[0][4].objects = [
     { kind: "multiple", id_d: -1, name: "Patriarch", monads: "{ 1-6 }", features: null, children_idds: [4001] },
   ];
 
@@ -303,16 +303,16 @@ test("árbol sintético: wordgrammar (clases, gloss recortado, metafeature)", ()
       },
     },
   ]);
-  dict.monadObjects[1].objects = [
+  dict.monadObjects[0][1].objects = [
     { kind: "multiple", id_d: 2001, name: "phrase", monads: "{ 1 }", features: {}, children_idds: [1001] },
   ];
-  dict.monadObjects[2].objects = [
+  dict.monadObjects[0][2].objects = [
     { kind: "multiple", id_d: 3001, name: "clause", monads: "{ 1 }", features: {}, subobjects: [{ tab: "0", code: "0" }], children_idds: [2001] },
   ];
-  dict.monadObjects[3].objects = [
+  dict.monadObjects[0][3].objects = [
     { kind: "multiple", id_d: 4001, name: "sentence", monads: "{ 1 }", features: {}, children_idds: [3001] },
   ];
-  dict.monadObjects[4].objects = [
+  dict.monadObjects[0][4].objects = [
     { kind: "multiple", id_d: -1, name: "Patriarch", monads: "{ 1 }", features: null, children_idds: [4001] },
   ];
 

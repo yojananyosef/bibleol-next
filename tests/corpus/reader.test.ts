@@ -68,7 +68,7 @@ test("reader: grammarInfoTable de una palabra de Gn 1:1 (paridad toolTipFunc)", 
     { mql: h.mql, dbinfo, l10nJson: h.dbconfig.l10n_json },
   );
   const j = dict.toJSON();
-  const words = j.monadObjects[0].objects;
+  const words = j.monadObjects[0][0].objects;
 
   const grammar = enhanceSentenceGrammar(dbinfo.sentencegrammar as never);
   const wg = getSentenceGrammarFor(grammar, "word")!;
@@ -129,7 +129,7 @@ test("reader: la 2ª palabra de Gn 1:1 es sustantivo (sp), con vocal/translit", 
   const grammar = enhanceSentenceGrammar(dbinfo.sentencegrammar as never);
   const wg = getSentenceGrammarFor(grammar, "word")!;
 
-  const w2 = j.monadObjects[0].objects.find((o) => o.monads === "{ 2-2 }")!;
+  const w2 = j.monadObjects[0][0].objects.find((o) => o.monads === "{ 2-2 }")!;
   const info = grammarInfoTable(
     wg,
     w2.features ?? {},

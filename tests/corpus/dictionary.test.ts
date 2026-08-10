@@ -146,15 +146,16 @@ test("Dictionary: toJSON serializa la jerarquía para el cliente", skipNoCorpus,
   const j = d.toJSON();
   assert.equal(j.bookTitle, "Genesis");
   assert.equal(j.sentenceSets.length, 1);
-  assert.equal(j.monadObjects.length, 5);
-  assert.equal(j.monadObjects[0].level, 0);
-  assert.equal(j.monadObjects[0].objects.length, 39);
-  const w0 = j.monadObjects[0].objects[0];
+  assert.equal(j.monadObjects.length, 1); // un conjunto de frases
+  assert.equal(j.monadObjects[0].length, 5);
+  assert.equal(j.monadObjects[0][0].level, 0);
+  assert.equal(j.monadObjects[0][0].objects.length, 39);
+  const w0 = j.monadObjects[0][0].objects[0];
   assert.equal(w0.kind, "single");
   assert.equal(w0.text, "בְּ");
   assert.equal(w0.bcv_loc, "Gen 1:1");
   assert.equal(w0.monads, "{ 1-1 }");
-  const pat = j.monadObjects[4].objects[0];
+  const pat = j.monadObjects[0][4].objects[0];
   assert.equal(pat.id_d, -1);
   assert.equal(pat.name, "Patriarch");
   closeAllEmdros();

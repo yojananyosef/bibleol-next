@@ -157,10 +157,12 @@ export function firstGlossOnly(value: string): string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function buildDisplayTree(
-  dictionary: { monadObjects: { level: number; objects: MonadObjectJSON[] }[] },
+  dictionary: { monadObjects: { level: number; objects: MonadObjectJSON[] }[][] },
   opts: DisplayBuildOptions,
 ): DisplayTree {
-  const levels = [...dictionary.monadObjects].sort((a, b) => a.level - b.level);
+  // En la vista de texto siempre hay un único conjunto de frases (showText
+  // reduce msets a 1); el índice 0 es el conjunto en sí.
+  const levels = [...dictionary.monadObjects[0]].sort((a, b) => a.level - b.level);
   const maxLevels = levels.length;
   const objAt = (lev: number): MonadObjectJSON[] => levels[lev]?.objects ?? [];
 

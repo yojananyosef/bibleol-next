@@ -16,7 +16,7 @@ export class TextError extends Error {}
 export interface ShowTextResult {
   db: string;
   bookTitle: string | number | null;
-  dictionary: { bookTitle: string | number | null; sentenceSets: string[]; sentenceSetsQuiz: string[] | null; monadObjects: { level: number; objects: MonadObjectJSON[] }[] };
+  dictionary: { bookTitle: string | number | null; sentenceSets: string[]; sentenceSetsQuiz: string[] | null; monadObjects: { level: number; objects: MonadObjectJSON[] }[][] };
   dbinfo_json: string;
   l10n_json: string;
   typeinfo_json: string;
