@@ -52,3 +52,6 @@ next-env.d.ts
 /data/hints/*.db-shm
 /data/hints/*.db-wal
 /data/hints/ETCBC4_words.db
+
+# e2e browser libs (sin root)
+/.e2e/

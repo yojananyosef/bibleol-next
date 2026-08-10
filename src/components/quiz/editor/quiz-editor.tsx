@@ -128,6 +128,12 @@ export function QuizEditor({ data, teacher }: QuizEditorProps) {
       void doSubmit(action, data.quiz ?? quizNameRef.current);
       return;
     }
+    if (action === "save" && !isNew) {
+      // El ejercicio ya tiene nombre: check_submit_quiz directamente (1:1 con
+      // el legacy, que omite el diálogo de nombre de archivo).
+      void onFilenameSave();
+      return;
+    }
 
     pendingActionRef.current = action;
     setFilename(data.quiz ?? "");
@@ -145,8 +151,8 @@ export function QuizEditor({ data, teacher }: QuizEditorProps) {
     quizNameRef.current = name;
 
     const res = await checkQuizNameAction(data.dir, name);
-    if (!res.ok) {
-      setFilenameError(res.error ?? "unknown error");
+    if (res.error) {
+      setFilenameError(res.error);
       return;
     }
     switch (res.status) {
@@ -361,8 +367,11 @@ export function QuizEditor({ data, teacher }: QuizEditorProps) {
             </p>
           ) : null}
           <div>
-            <Label className="mb-1 block text-sm">{localize("enter_filename_no_3et")}</Label>
+            <Label htmlFor="quiz-filename" className="mb-1 block text-sm">
+              {localize("enter_filename_no_3et")}
+            </Label>
             <Input
+              id="quiz-filename"
               value={filename}
               onChange={(e) => {
                 setFilename(e.target.value);

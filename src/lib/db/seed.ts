@@ -54,6 +54,15 @@ export function seedDemoData(db: Database.Database): { users: number; classes: n
     for (const u of ["teacher", "student"]) {
       db.prepare("INSERT INTO bol_userclass (userid, classid, access) VALUES (?, ?, 1)").run(ids.get(u)!, classId);
     }
+    // Registrar los directorios de ejercicios demo como públicos (classid 0 =
+    // "everybody"), como hace el legacy en exercisedir/classexercise. Sin esto
+    // may_access/filter_directories ocultan ETCBC4 y Nestle 1904.
+    const insDir = db.prepare("INSERT INTO bol_exercisedir (pathname) VALUES (?)");
+    const insClassDir = db.prepare("INSERT INTO bol_classexercise (pathid, classid) VALUES (?, 0)");
+    for (const dir of ["ETCBC4", "ETCBC4/demo", "Nestle 1904", "Nestle 1904/demo"]) {
+      const pathid = Number(insDir.run(dir).lastInsertRowid);
+      insClassDir.run(pathid);
+    }
   });
   tx();
   return { users: users.length, classes: 1 };

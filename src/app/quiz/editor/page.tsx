@@ -35,6 +35,7 @@ export default async function EditQuizPage({ searchParams }: EditQuizPageProps) 
   return (
     <main className="flex flex-1 justify-center p-6">
       <div className="w-full max-w-5xl">
+        <h1 className="mb-4 text-xl font-semibold">Exercise editor</h1>
         <Suspense fallback={<p className="py-10 text-sm text-muted-foreground">Loading…</p>}>
           <QuizEditor data={res.data} teacher={teacher} />
         </Suspense>

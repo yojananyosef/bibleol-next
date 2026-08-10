@@ -1,7 +1,7 @@
 import { QuizPathBrowser } from "@/components/quiz/QuizPathBrowser";
 import { createQuizPath } from "@/lib/services/quizpath";
 import { dbAndBooks } from "@/lib/corpus/emdros";
-import { checkTeacher } from "@/lib/auth/guards";
+import { checkLoggedIn } from "@/lib/auth/guards";
 import { isTeacher, isAdmin } from "@/lib/services/users";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ export default async function SelectQuizPage({ searchParams }: SelectQuizPagePro
   const qp = createQuizPath(false);
   qp.init(params.path ?? "", true, false, []);
 
-  const me = await checkTeacher();
+  const me = await checkLoggedIn();
   const teacher = isTeacher(me) || isAdmin(me);
   const defaultDb = dbAndBooks("en")[0]?.name;
 
