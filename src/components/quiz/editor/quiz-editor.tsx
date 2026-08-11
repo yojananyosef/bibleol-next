@@ -235,7 +235,7 @@ export function QuizEditor({ data, teacher }: QuizEditorProps) {
           seconds,
         });
         if (res.ok) {
-          router.push(`/quiz/run?quiz=${encodeURIComponent(res.quizPath ?? "")}&count=5`);
+          router.push(`/quiz/test?quiz=${encodeURIComponent(res.quizPath ?? "")}`);
         } else {
           alert("Error", res.error ?? "unknown error");
           setBusy(false);

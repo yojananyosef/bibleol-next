@@ -20,6 +20,8 @@ export interface ClassRow {
   uid: number | null;
   clpass: string | null;
   username?: string | null;
+  ufirst_name?: string | null;
+  ulast_name?: string | null;
 }
 
 /** Datos de una clase para set_class (id null = crear nueva). */
@@ -169,4 +171,48 @@ export function chownClass(classid: number, userid: number): void {
     .get(userid) as { id: number } | undefined;
   if (!row) throw new DataException(MSG_CLASSES.notTeacher);
   db.prepare("UPDATE bol_class SET ownerid = ? WHERE id = ?").run(userid, classid);
+}
+
+// ---------------------------------------------------------------------------
+// Validación y graders (Ctrl_classes::edit_one_class / add_one_grader)
+// ---------------------------------------------------------------------------
+
+const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+/** date_valid_check — fecha YYYY-MM-DD válida (2000-2099, bisiesto; 1:1). */
+export function dateValidCheck(date: string): boolean {
+  if (date === "") return true;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  if (!m) return false;
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  const isLeap = year % 4 === 0;
+  if (isLeap && month === 2 && day === 29) return true;
+  if (year < 2000 || year > 2099 || month < 1 || month > 12 || day < 1 || day > DAYS_IN_MONTH[month - 1])
+    return false;
+  return true;
+}
+
+/** is_unique[class.classname] — comprueba si el nombre de clase ya existe. */
+export function classNameExists(classname: string): boolean {
+  const db = getAppDb();
+  return (
+    (db.prepare("SELECT COUNT(*) n FROM bol_class WHERE classname = ?").get(classname) as { n: number }).n > 0
+  );
+}
+
+/** add_one_grader — inserta a un profesor como grader de la clase. */
+export function addGrader(classid: number, graderid: number): void {
+  const db = getAppDb();
+  db.prepare("INSERT OR IGNORE INTO bol_grader (graderid, classid) VALUES (?, ?)").run(graderid, classid);
+}
+
+/** get_grader_ids — ids de los graders de la clase. */
+export function getGraderIds(classid: number): number[] {
+  const db = getAppDb();
+  const rows = db.prepare("SELECT graderid FROM bol_grader WHERE classid = ?").all(classid) as {
+    graderid: number;
+  }[];
+  return rows.map((r) => r.graderid);
 }

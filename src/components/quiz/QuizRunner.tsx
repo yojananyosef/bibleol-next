@@ -4,7 +4,7 @@
 // (BibleOL/ts/quiz.ts + panelquestion.ts 1:1). Implementa QuizUi y PanelUi;
 // el estado de corrección vive en ComponentWithYesNo / InputHandle.
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Quiz, type QuizUi } from "@/legacy-ts/quiz";
 import {
@@ -28,6 +28,7 @@ import type { ReaderSentenceGrammar } from "@/lib/reader/sentencegrammar";
 import { updateExamQuizStatAction, updateStatAction } from "@/app/actions/statistics";
 import type { EndQuizPayload } from "@/lib/services/statistics";
 import { Button } from "@/components/ui/button";
+import { VirtualKeyboard, type VkCharset } from "@/components/quiz/VirtualKeyboard";
 
 export interface QuizRunnerProps {
   quizDataJson: string;
@@ -61,6 +62,20 @@ export function QuizRunner(props: QuizRunnerProps) {
   const [info, setInfo] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<string>("Unlimited");
   const [showLocation, setShowLocation] = useState(true);
+  const [vkOpen, setVkOpen] = useState(false);
+
+  // Virtual keyboard del quiz (1:1 view_text_display): se muestra cuando la
+  // plantilla marca quizFeatures.useVirtualKeyboard y el corpus es hebreo/griego.
+  const vkMeta = useMemo((): { useVk: boolean; charset: VkCharset | null } => {
+    try {
+      const config = JSON.parse(props.dbinfoJson) as { charSet?: string };
+      const qd = JSON.parse(props.quizDataJson) as { quizFeatures?: { useVirtualKeyboard?: boolean } };
+      const charset = config.charSet === "hebrew" || config.charSet === "greek" ? config.charSet : null;
+      return { useVk: qd.quizFeatures?.useVirtualKeyboard === true && charset !== null, charset };
+    } catch {
+      return { useVk: false, charset: null };
+    }
+  }, [props.dbinfoJson, props.quizDataJson]);
   const sendingRef = useRef(false);
 
   const panelRef = useRef<PanelQuestion | null>(null);
@@ -573,6 +588,19 @@ export function QuizRunner(props: QuizRunnerProps) {
       )}
 
       {/* Sub-quiz navigation */}
+      {vkMeta.useVk && (
+        <div className="mb-4">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setVkOpen((o) => !o)}
+          >
+            ⌨ {vkOpen ? "Hide keyboard" : "Keyboard"}
+          </Button>
+          {vkOpen && vkMeta.charset && <VirtualKeyboard charset={vkMeta.charset} />}
+        </div>
+      )}
       {(panel?.subQuizMax ?? 1) > 1 ? (
         <div className="mb-4 flex items-center gap-2 text-sm">
           <Button

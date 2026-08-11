@@ -146,7 +146,7 @@ test("profesor: crea, sobrescribe y testea un ejercicio", { timeout: 240_000 }, 
     await page.waitForURL(/\/quiz\/editor\?quiz=/);
     await editorReady(page);
     await page.getByRole("button", { name: "Test Exercise" }).click();
-    await page.waitForURL(new RegExp(`/quiz/run\\?quiz=${encodeURIComponent(`${QUIZ_DIR}/${file}`)}&count=5`));
+    await page.waitForURL(/\/quiz\/test\?quiz=/);
     await page.getByRole("button", { name: "Check answer" }).waitFor();
     await page.getByRole("button", { name: "GRADE task" }).waitFor();
   } finally {
@@ -359,9 +359,9 @@ test("alumno: el temporizador envía las estadísticas al agotarse", { timeout: 
 
   try {
     await startQuiz(page, file);
-    // time_seconds = 4 → 1s efectivo × 24 features (id2FeatVal) ≈ 24s hasta el
-    // auto-submit; el temporizador envía las estadísticas y redirige a /quiz.
-    await page.waitForURL(/\/quiz$/, { timeout: 60_000 });
+    // total = number_small_questions (id2FeatVal.size, 24 features) ×
+    // time_seconds (1s + buffer 3s = 4s) ≈ 96s de deadline, más el arranque.
+    await page.waitForURL(/\/quiz$/, { timeout: 180_000 });
 
     const quiz = lastStudentQuiz();
     assert.equal(quiz.grading, 1, "el envío automático del temporizador califica");
