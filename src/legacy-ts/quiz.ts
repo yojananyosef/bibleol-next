@@ -249,10 +249,14 @@ export class Quiz {
       // Create a panel for the next question
       this.currentPanelQuestion = new PanelQuestion(this.qd, currentDict, this.exam_mode, this.charset, this.l10n, this.typeinfo);
 
+      // 'Next' siempre habilitado salvo en la última pregunta (legacy:
+      // removeAttr/attr('disabled') sobre button#next_question).
       if (this.currentDictIx + 1 === this.dictionaries.sentenceSets.length) {
-        // This is the last question, disable the 'Next' button
         this.ui.disableNext();
         this.ui.enableFinish();
+      } else {
+        this.ui.enableNext();
+        this.ui.disableFinish();
       }
 
       this.loadAnswer();

@@ -91,7 +91,19 @@ export class IndirectLookup {
       const db = getDb(fsetting.indirdb);
       const sql = (fsetting.sql_command_variant ?? fsetting.sql_command) ?? "";
       const query = vsprintf(sql.replace(/\{PRE\}/g, ""), keyArray);
-      const rows = db.prepare(query).all() as Record<string, unknown>[];
+      let rows: Record<string, unknown>[];
+      try {
+        rows = db.prepare(query).all() as Record<string, unknown>[];
+      } catch (err) {
+        // Tabla de gloses ausente (p. ej. lexicon_Aramaic_pt): sin datos
+        // para ese idioma -> sin entrada, como si no hubiera resultado.
+        if (err instanceof Error && /no such table/i.test(err.message)) {
+          hit = "*";
+          this.cache.set(key, hit);
+          return hit;
+        }
+        throw err;
+      }
 
       if (fsetting.multiple) {
         hit = rows.map((row) => encodeRow(row)) as IndirectValue;

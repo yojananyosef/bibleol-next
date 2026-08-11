@@ -32,7 +32,7 @@ export function seedDemoData(db: Database.Database): { users: number; classes: n
       created_time, last_login, warning_sent, isteacher, preflang, family_name_first, istranslator, accept_policy,
       policy_lang, acc_code, acc_code_time, prefvariant)
      VALUES (@first_name, @last_name, @username, @password, NULL, 0, @isadmin, @email, NULL, @created_time, 0, 0,
-      @isteacher, @preflang, 0, @istranslator, 0, NULL, NULL, 0, NULL)`
+      @isteacher, @preflang, 0, @istranslator, @created_time, NULL, NULL, 0, NULL)`
   );
 
   const tx = db.transaction(() => {

@@ -4,6 +4,7 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, unlinkSync } from "node:fs";
 import path from "node:path";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
+import Database from "better-sqlite3";
 
 /**
  * E2E del editor de ejercicios (flujo completo de profesor + alumno) sobre el
@@ -202,6 +203,35 @@ test("alumno: ejecuta el ejercicio guardado por el profesor", { timeout: 240_000
     await page.waitForURL(/\/quiz\/run\?quiz=/);
     await page.getByRole("button", { name: "Check answer" }).waitFor();
     await page.getByRole("button", { name: "GRADE task" }).waitFor();
+
+    // Responder las 10 preguntas (input sin atributo type): contestar → corregir →
+    // pasar a la siguiente. Next queda deshabilitado solo en la última.
+    for (let qi = 0; qi < 10; qi++) {
+      const reqInput = page.locator("tbody input").first();
+      await reqInput.waitFor();
+      await reqInput.fill(`answer ${qi}`);
+      await page.getByRole("button", { name: "Check answer", exact: true }).click();
+      await page.locator("td", { hasText: /^[✓✗]$/ }).first().waitFor();
+      if (qi < 9) await page.getByRole("button", { name: "Next question", exact: true }).click();
+    }
+
+    // Gradar: estadísticas al servidor + redirect a la selección
+    await page.getByRole("button", { name: "GRADE task", exact: true }).click();
+    await page.waitForURL(/\/quiz$/);
+
+    // El quiz quedó registrado con grading=1 y sus preguntas en la BD
+    const appDb = new Database(path.join(process.cwd(), "data", "app.db"));
+    const lastQuiz = appDb
+      .prepare("SELECT id, grading, tot_questions FROM bol_sta_quiz WHERE userid = (SELECT id FROM bol_user WHERE username = 'student') ORDER BY id DESC LIMIT 1")
+      .get() as { id: number; grading: number; tot_questions: number };
+    assert.ok(lastQuiz, "debe haber un bol_sta_quiz para el alumno");
+    assert.equal(lastQuiz.grading, 1, "el quiz se gradó");
+    assert.ok(lastQuiz.tot_questions > 0, "tot_questions debe quedar calculado");
+    const questionCount = (
+      appDb.prepare("SELECT COUNT(*) AS n FROM bol_sta_question WHERE quizid = ?").get(lastQuiz.id) as { n: number }
+    ).n;
+    appDb.close();
+    assert.ok(questionCount > 0, "debe haber preguntas registradas");
   } finally {
     if (existsSync(filePath)) unlinkSync(filePath);
     await ctx.close();

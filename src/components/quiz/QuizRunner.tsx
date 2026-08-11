@@ -103,13 +103,26 @@ export function QuizRunner(props: QuizRunnerProps) {
       setProgressText: (text) => setProgressText(text),
       setDesc: (html) => setDesc(html),
       scrollToQuestion: () => window.scrollTo({ top: 0 }),
-      navigateTo: (url) => router.push(url),
+      navigateTo: (url) => {
+        // Rutas legacy de CodeIgniter → rutas de la app (la nav de
+        // sendStatistics ya aterrizó en /quiz; el .then del legacy
+        // re-navega con el alias de CodeIgniter).
+        if (url === "text/select_quiz") router.push("/quiz");
+        else if (url === "exam/active_exams") router.push("/exams/done");
+        else router.push(url);
+      },
       showError: (message) => setInfo(`error: ${message}`),
       showSendingStatistics: () => setInfo("sending_statistics"),
       alert: (message) => window.alert(message),
       sendStatistics: async (statistics) => {
         try {
-          await updateStatAction(statistics as unknown as EndQuizPayload);
+          // El legacy serializaba las estadísticas a JSON plano antes de
+          // enviarlas; las instancias de clase no son serializables en el
+          // protocolo de flight y el servidor recibiría una referencia
+          // temporal en lugar de los datos.
+          await updateStatAction(
+            JSON.parse(JSON.stringify(statistics)) as unknown as EndQuizPayload,
+          );
         } catch (err) {
           throw new Error(String(err));
         }
@@ -604,10 +617,10 @@ export function QuizRunner(props: QuizRunnerProps) {
         <Button type="button" disabled={nextDisabled} onClick={handleNext}>
           Next question
         </Button>
-        <Button type="button" variant="outline" onClick={() => panel?.checkAnswerButton()}>
+        <Button type="button" variant="outline" onClick={() => { panel?.checkAnswerButton(); bump(); }}>
           Check answer
         </Button>
-        <Button type="button" variant="outline" onClick={() => panel?.showAnswerButton()}>
+        <Button type="button" variant="outline" onClick={() => { panel?.showAnswerButton(); bump(); }}>
           Show answer
         </Button>
         <Button type="button" variant="default" disabled={finishDisabled} onClick={() => finishQuiz(true)}>

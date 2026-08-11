@@ -34,19 +34,23 @@ export default async function RunQuizPage({ searchParams }: RunQuizPageProps) {
     l10nJsJson: "{}",
   });
 
+  const runnerProps = {
+    quizDataJson: payload.quizData_json,
+    dictionariesJson: payload.dictionaries_json,
+    dbinfoJson: payload.dbinfo_json,
+    l10nJson: payload.l10n_json,
+    l10nJsJson: payload.l10n_js_json,
+    typeinfoJson: payload.typeinfo_json,
+    timeSeconds: payload.time_seconds,
+    isUnlimited: payload.is_unlimited,
+    numberSmallQuestions: payload.number_small_questions,
+  };
+
   return (
     <main className="flex flex-1 flex-col items-center">
       <Suspense fallback={<p className="py-10 text-sm text-muted-foreground">Loading…</p>}>
         <QuizRunner
-          quizDataJson={payload.quizData_json}
-          dictionariesJson={payload.dictionaries_json}
-          dbinfoJson={payload.dbinfo_json}
-          l10nJson={payload.l10n_json}
-          l10nJsJson={payload.l10n_js_json}
-          typeinfoJson={payload.typeinfo_json}
-          timeSeconds={payload.time_seconds}
-          isUnlimited={payload.is_unlimited}
-          numberSmallQuestions={payload.number_small_questions}
+          {...runnerProps}
           isExam={examid !== undefined}
           examid={examid}
           exerciseLst={exerciseLst}

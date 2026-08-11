@@ -652,8 +652,8 @@ export class PanelQuestion {
             const correctAnswerFriendly: string = getFeatureValueFriendlyName(featType, correctAnswer, false, false); // Localized correct answer
             let hasAddedOther = false; // Have we added an 'Other value' to the list of values?
             const correctIsOther: boolean =
-              (featset.otherValues !== undefined && featset.otherValues.indexOf(correctAnswer) !== -1) ||
-              (hideFeatures !== undefined && hideFeatures.indexOf(correctAnswer) !== -1);
+              (featset.otherValues != null && featset.otherValues.indexOf(correctAnswer) !== -1) ||
+              (hideFeatures != null && hideFeatures.indexOf(correctAnswer) !== -1);
 
             comp = new ComponentWithYesNo(COMPONENT_TYPE.comboBox, PanelQuestion.radioHandle(), `quizitem_${quizItemID}`);
 
@@ -661,11 +661,11 @@ export class PanelQuestion {
             // or "Other value" to the combo box
             for (let valix = 0; valix < values.length; ++valix) {
               const s: string = values[valix]; // Feature value under consideration
-              if (featset.hideValues !== undefined && featset.hideValues.indexOf(s) !== -1) continue; // Don't show the value s
+              if (featset.hideValues != null && featset.hideValues.indexOf(s) !== -1) continue; // Don't show the value s
 
               if (
-                (featset.otherValues !== undefined && featset.otherValues.indexOf(s) !== -1) ||
-                (hideFeatures !== undefined && hideFeatures.indexOf(s) !== -1)
+                (featset.otherValues != null && featset.otherValues.indexOf(s) !== -1) ||
+                (hideFeatures != null && hideFeatures.indexOf(s) !== -1)
               ) {
                 // The value s is one of the values that make up 'Other value'
                 if (!hasAddedOther) {
