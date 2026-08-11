@@ -47,7 +47,7 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
 - [x] `find_monads`, `getMonadsAtLevel`, fullUniverse (← Mod_askemdros + Mql) — `src/lib/corpus/emdros.ts` (getEmdros, findMonads, dbAndBooks, shebanqLink)
 - [x] Tests de paridad: pasajes fijos (Gn 1:1-3, Jn 1:1, Jn 3:16) en los 3 corpora vs salida esperada — `tests/corpus/` (emdros/db-config/dictionary/mql + reader)
 
-## FASE 4 — Lector de texto (Ctrl_text, Dictionary) [EN CURSO]
+## FASE 4 — Lector de texto (Ctrl_text, Dictionary) ✅ (completada; validada con 38 tests en tests/reader + tests/config + tests/corpus)
 - [x] `src/lib/corpus/dictionary.ts` (← Dictionary.php server-side): monset sets, constructHierarchy, addMonadObject, getVisual, indirectLookup (gloss/hint/glossurl), bcv/Patriarch, toJSON para el cliente
 - [x] Rutas: `/text` (select_text: selección de texto/idioma) y `/text/[db]/[book]/[chapter]/[vfrom]/[vto]` (show_text) — RSC — `src/app/text/`, `src/lib/services/corpus.ts` (showText/dbAndBooks)
 - [x] Render por monadas con jerarquía oracional (frase→sentence), numerado de versículos, glosas en tooltip, RTL/LTR (`<bdi>`) — `src/components/text/text-display.tsx`
@@ -57,29 +57,30 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
 - [x] GrammarBox (← GrammarSelectionBox TS + displaymonadobject): vista de gramática con cajas por frase/cláusula — `src/lib/reader/display.ts` (árbol DisplayMonadObject 1:1: segmentos hasp/hass, dummy, Patriarch, wordgrammar, clause_atom:tab, indentationIndicator), `src/components/text/grammar-box.tsx` (FollowerBox border/seplin/wordspace implícitos, adjustDivLevWidth, sangría ETCBC4, sessionStorage por db), `src/components/text/grammar-panel.tsx` (checkboxes por nivel con grupos, color-limit, clear), `src/components/text/grammar-display.css` (port ol.css); toggle Text/Grammar en text-display; tests `tests/reader/display.test.ts` (7)
 - [x] Fonts: SIL/CLM webfonts → `public/fonts/` (woff/ttf, titillium con woff2) + `src/app/fonts.css` (port styles/fonts.css, @font-face modernos) + `src/lib/reader/font-css.ts` (port view_font_css.php: clases `.hebrew/.greek/…` con font-family/direction y estilos textdisplay/wordgrammar/tooltip/input) + `src/lib/services/config.ts` (← Mod_config: alphabets, font_setting con fallback user_id=0, avail_fonts, personal_font, set_font, font_selection) + `/settings/fonts` (← Ctrl_config::fonts + view_font_settings: tabs por alfabeto, radio de fuentes + personal, bold/italic/size por estilo, server action save) + clases foreign/transliterated reales en palabras (`textdisplay ${charset.foreignClass}`) y font CSS por usuario inyectado en `/text/[...parts]`; tests `tests/config.test.ts` (8)
 
-## FASE 5 — Motor de quiz (Mod_askemdros + ts/ port)
-- [ ] `src/legacy-ts/`: port literal de `BibleOL/ts/*.ts` (util, configuration, charset, monadobject, displaymonadobject, sentencegrammar, dictionary, quizdata, panelquestion, quiz, grammarselectionbox, localization, stringwithsort, resizer, statistics) como módulos TS puros sin DOM
+## FASE 5 — Motor de quiz (Mod_askemdros + ts/ port) [~90% — quedan: /quiz/test + VirtualKeyboard + selectors del editor]
+- [x] `src/legacy-ts/`: port de `BibleOL/ts/*.ts` **según necesidad** — 14 módulos puros sin DOM (util, configuration, dictionary, monadobject, displaymonadobject, localization, stringwithsort, quizdata, panelquestion, quiz, statistics, answer, componentwithyesno + tests `tests/quiz/legacy-ts.test.ts`); charset/sentencegrammar/grammarselectionbox/resizer viven portados en `reader/*` y `components/quiz/editor/*`
 - [x] `src/lib/quiz/` (← Quiz_data.php, Suggest_answers, Universe_tree, ExtendedQuizFeatures): `quiz-data.ts` (Quiz_data/getNextCandidate/fetchBookLimit, ExtendedQuizFeatures), `suggest.ts` (Suggest_answers), `universe-tree.ts` (Universe_tree + TreeNode jstree: get_jstree/expandLevel/searchMarked)
 - [x] `src/lib/quiz/template-parser.ts`: parser `.3et` XML con sax (questiontemplate v1/v3, sentenceselection, featurehandlers, quizfeatures, paths)
 - [x] `src/lib/services/text-quiz.ts` (← Mod_askemdros): **hecho** — show_quiz (payload 1:1 view_text_display: quizData_json/dictionaries_json/dbinfo/l10n/l10n_js/typeinfo, useTooltip←bol_userconfig, time_seconds←bol_exerciseowner), get_quiz_universe, add_universe_level, parseQuiz/parseQuizBasic/decodeQuiz/parsePath/strip_monads, new_quiz (JSON por defecto), edit_quiz, show_test_quiz, package_test_quiz/save_quiz (vía `src/lib/quiz/template-writer.ts`, port de Template::writeAsXml + MqlData + FeatureHandlerList + 6 handlers + QuizFeatures; round-trip de los .3et demo verificado)
-- [ ] Rutas: `/quiz` (select_quiz), `/quiz/run` (show_quiz), `/quiz/test`, `/quiz/editor` (edit_quiz/new_quiz), `/quiz/universe` (show_quiz_univ, add_universe_level)
-- [ ] `src/components/quiz/PassageTree.tsx` (← view_passage_tree_script + `Universe_tree` expand_level + `*.bookorder` + jstree): árbol de pasajes para selección de quiz y editor
-- [ ] `src/components/quiz/QuizRunner.tsx`: envoltura React del port `Quiz`/`PanelQuestion` (flujo next/prev/finish, progress, timer, exam_mode)
-- [ ] `src/components/quiz/PanelTemplate*.tsx` (← paneltemplmql/quizfeatures/quizobjectselector/sentenceselector)
-- [ ] Server Action `update_stat` (← Ctrl_statistics::update_stat + Mod_statistics endQuiz): escribe bol_sta_quiz/bol_sta_question/bol_sta_requestfeature/bol_sta_displayfeature + grading flag
-- [ ] `src/components/quiz/VirtualKeyboard.tsx` (hebreo IL Biblical Hebrew SIL / griego polytonic)
-- [ ] Editor de ejercicios (← editquiz.ts port + view_edit_quiz)
+- [x] Rutas: `/quiz` (select_quiz), `/quiz/run` (show_quiz), `/quiz/editor` (edit_quiz/new_quiz), `/quiz/universe` + `/quiz/universe-level` (show_quiz_univ, add_universe_level) — **queda `/quiz/test`** (show_test_quiz ya portado en text-quiz.ts)
+- [x] `src/components/quiz/PassageTree.tsx` (← view_passage_tree_script + `Universe_tree` expand_level + `*.bookorder` + jstree): árbol de pasajes para selección de quiz y editor
+- [x] `src/components/quiz/QuizRunner.tsx`: envoltura React del port `Quiz`/`PanelQuestion` — flujo next/prev/finish, progress bar, timer (auto-submit con envío de estadísticas), exam_mode (exercise_lst encadenado + /exams/done); fix de raíz: `sendStatistics` serializa `JSON.parse(JSON.stringify(statistics))` antes de la server action (las instancias de clases legacy no cruzan el flight boundary)
+- [x] `src/components/quiz/editor/` (← paneltemplmql/quizfeatures/quizobjectselector/sentenceselector): quiz-editor.tsx + tabs features/mql-panel/universe/timer — **quedan los selectores de objeto/frase completos**
+- [x] Server Action `update_stat` (← Ctrl_statistics::update_stat + Mod_statistics endQuiz): `src/app/actions/statistics.ts` — updateStatAction/updateExamQuizStatAction escribe bol_sta_quiz/bol_sta_question/bol_sta_requestfeature/bol_sta_displayfeature + grading flag
+- [ ] `src/components/quiz/VirtualKeyboard.tsx` (hebreo IL Biblical Hebrew SIL / griego polytonic) — pendiente (la lógica textForeign ya está testeada en legacy-ts/panelquestion)
+- [x] Editor de ejercicios (← editquiz.ts port + view_edit_quiz): `src/lib/services/quizeditor.ts` (calcTimeLimit con buffer +3s, checkQuizName, submitQuiz, testQuiz) + acciones en `src/app/actions/quizeditor.ts` — validado con **5 e2e** en `tests/e2e/editor.e2e.test.ts` (SAVE sin grading, timer auto-submit, modo examen con bol_exam_results/bol_exam_finished)
 - [x] Tests: paridad de evaluación de respuestas vs exercise_model original (`tests/quiz/text-quiz.test.ts` 5/5: payload showQuiz sin login, QuizError, árbol universo, expandLevel, getTimeSeconds) + `tests/quiz/template-writer.test.ts` (6: round-trip XML de todos los .3et demo, MQL directo, orden de requestFeatures, package/save a fichero, error de escritura, newQuiz)
 
-## FASE 6 — Clases y ejercicios (Ctrl_classes, Ctrl_userclass, Mod_quizpath)
-- [ ] `src/lib/services/classes.ts` (← Mod_classes + Ctrl_classes): CRUD, change_owner, delete_class, add_one_grader, edit_one_class, enrol_before
-- [ ] `src/lib/services/userclass.ts` (← Mod_userclass + Ctrl_userclass): users_in_class, classes_for_user, enroll (con password de clase), enroll_by_folder, unenroll, manage_access
-- [ ] `src/lib/services/quizpath.ts` (← Mod_quizpath): init paths, dirlist (árbol de ejercicios), owners (bol_exerciseowner), time_seconds, mkdir/rename/rmdir/delete, fix_exerciseowner, chown_files
-- [ ] `src/lib/services/exercise-dir.ts` (← Mod_classdir + bol_exercisedir/bol_classexercise)
+## FASE 6 — Clases y ejercicios (Ctrl_classes, Ctrl_userclass, Mod_quizpath) [~50% — servicios listos; faltan rutas y UI]
+- [x] `src/lib/services/quizpath.ts` (← Mod_quizpath): init paths, dirlist (árbol de ejercicios), owners (bol_exerciseowner), time_seconds, mkdir/rename/rmdir/delete, fix_exerciseowner, chown_files + `QuizPathBrowser.tsx`
+- [x] `src/lib/services/classes.ts` (← Mod_classes, 151 líneas 1:1): get_all_classes (join owner, sin colisión de columnas), get_class_by_id (-1 = nueva), get_classes_by_ids, get_classes_owned, get_named_classes_owned (owner + grader sin duplicados), get_named_classes_enrolled, set_class (insert/update, password/enrol_before vacíos → NULL), delete_class (limpia userclass/classexercise), chown_class (solo profesor/admin)
+- [x] `src/lib/services/userclass.ts` (← Mod_userclass 1:1 + lógica de Ctrl_userclass): get_users_in_class, get_named_users_in_class (family_name_first), update_users_in_class, get_classes_for_user, get_classes_and_access, update_classes_for_user, enroll_user/unenroll_user/change_access/gave_access + before_date (Europe/Copenhagen), enrollAvailability (prioridad + enrol_before), enrollIn (password de clase), manageAccess, unenrollFrom, usersInClass/classesForUser (guardas owner/admin)
+- [x] Tests de integración `tests/classes.test.ts` (10): CRUD, join/alias, ownership+grader, chown, enroll con password y caducidad, sync bidireccional, acceso, beforeDate
+- [ ] `src/lib/services/exercise-dir.ts` (← Mod_classdir + bol_exercisedir/bol_classexercise) — parcial (getClassesForDir/mayAccess/filterDirectories ya en quizpath.ts)
 - [ ] Rutas: `/classes`, `/classes/:id`, `/enroll`, `/exercises` (dirbrowser tipo jstree → componente React tree)
-- [ ] Tests de integración de árbol de ejercicios
 
-## FASE 7 — Exámenes (Ctrl_exams, Mod_exams)
+## FASE 7 — Exámenes (Ctrl_exams, Mod_exams) [infra parcial: exam_mode probado e2e]
+- [x] Corazón del flujo ya vivo: `updateExamQuizStatAction` (escribe bol_exam_finished + bol_exam_results), `/exams/done`, modo examen en QuizRunner (searchParams examid + exercise_lst encadenado) — **verificado en e2e con bol_exam + bol_exam_active sembrados** (`tests/e2e/editor.e2e.test.ts` test 4)
 - [ ] `src/lib/exams/exam-xml.ts`: parser XML `examcode` con sax (exercises/exercisename/numq/description + parámetros)
 - [ ] `src/lib/services/exams.ts` (← Mod_exams + Ctrl_exams): create_exam, create_exam_instance, edit_exam, delete_exam(_instance), get_active_exam, get_completed_exam_exercises, getDirContents/children
 - [ ] `src/lib/exams/instance.ts`: deadlines (bol_exam_status: start_time/deadline = min(end, start+duration)), teacher override
@@ -87,10 +88,9 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
 - [ ] Server Actions: save_exam, submit_exam_quiz (bol_exam_finished + bol_exam_results), update_exam_quiz_stat
 - [ ] Timer de examen en cliente (deadline → auto-finish)
 
-## FASE 8 — Notas y estadísticas (Mod_grades, Mod_statistics, Ctrl_grades, Ctrl_statistics)
+## FASE 8 — Notas y estadísticas (Mod_grades, Mod_statistics, Ctrl_grades, Ctrl_statistics) [~30% — núcleo de estadística listo]
+- [x] `src/lib/services/statistics.ts` (← Mod_statistics, núcleo): newQuizTemplate, startQuiz, endQuiz (grading flag + tiempos + features), quizRequestedFeatures, hashCode + tests `tests/quiz/statistics.test.ts` — **quedan** get_score_by_date_user_templ, get_features_by_date_user_templ, allTemplates/Quizzes, get_quizzes_duration, purge
 - [ ] `src/lib/grades/scales.ts` (← calc_grades_helper.php): esquemas percent/decimal/usletter/german + cálculo porcentaje→nota
-- [ ] `src/lib/services/grades.ts` (← Mod_grades, 1026 líneas): get_exercise_scores, class/teacher/student views, add_grader, edit_visibility, ownership
-- [ ] `src/lib/services/statistics.ts` (← Mod_statistics, 536 líneas): newQuizTemplate, startQuiz, endQuiz, quizRequestedFeatures, allTemplates/Quizzes, get_score_by_date_user_templ, get_features_by_date_user_templ, get_quizzes_duration, purge
 - [ ] `src/lib/statistics/period.ts` (← Statistics_timeperiod.php)
 - [ ] Rutas: `/stats` (show_stat student), `/stats/time`, `/stats/exercises`, `/grades` (teacher: classes/exams/exercises; progress charts)
 - [ ] Gráficas con recharts (sustituye RGraph: graphing.js + handle_legend.js → componentes React)
