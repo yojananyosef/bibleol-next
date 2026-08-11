@@ -122,7 +122,10 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
   - [x] Server Actions `src/app/actions/urls.ts`: changeUrlAction (id=-1 crea con lex+longlang, sino set) / deleteUrlAction, ambos con redirect requesturi+scrolltop (useActionState)
   - [x] Menú admin "Gloss links" (menu_lang manage_gloss_links) en `src/app/page.tsx`; langLine i18n en ambas páginas
   - [x] Tests: `tests/urls.test.ts` (7) + `tests/e2e/urls.e2e.test.ts` (3: menú por rol, botones/avisos, crear enlace en diálogo) — suite completa 229 tests + 3 e2e en verde
-- [ ] OAuth2 Google/Facebook (Ctrl_oauth2, bol_user.oauth2_login) — Auth.js
+- [x] OAuth2 Google/Facebook (Ctrl_oauth2 + Mod_users oauth2) — **port directo sin Auth.js** (misma decisión técnica que MQL→SQL): `src/lib/oauth2/` (cookie.ts: flujo state/access_token/new_oauth2, oauth2.ts: code→token + userinfo + revoke_google_permissions, callback.ts: common_callback 1:1) + rutas `/oauth2/start` y `/oauth2/google_callback`/`/oauth2/facebook_callback` (route handlers) + `/oauth2/accept_policy_no` (borrado solo con verify_accept_code válido + revoke) + `/oauth2/rejected` (you_rejected_oauth2_text)
+  - [x] Login: botones "Sign in with Google/Facebook" (config env `BIBLEOL_GOOGLE/FACEBOOK_LOGIN_ENABLED`) — `login-form.tsx`
+  - [x] Home: variante `NewOAuth2User` (view_new_oauth2_user.php: welcome + your_google/facebook_name, política con `policy_lang` del prefijo `(xx)` vía `parsePolicyText`, Yes/No) — `src/app/new-oauth2-user.tsx` + `policy-text.tsx`
+  - [x] Perfil OAuth2 (view_oauth2_profile + _left): nombre/email readonly, radios chinese_name_order, selects preflang/prefvariant, change_through_google/facebook, delete_me_google/facebook (revoke: 400→google_no_response_delete, ≠200→google_no_valid_reply; facebook sin revoke) — `src/app/profile/oauth2-profile.tsx` + actions `deleteMeOauth2Action`/`editOauth2ProfileAction`
 - [ ] File manager + upload (Ctrl_file_manager, Ctrl_upload, valums) — route handlers multipart
 - [ ] pics (Ctrl_pic2db + bol_bible_refs.picture + resources.3bmoodle.dk)
 - [ ] SHEBANQ (Ctrl_shebanq), privacy, help, migrate (bol_migrations), maketypeinfo
