@@ -12,6 +12,7 @@ interface RunQuizPageProps {
     count?: string;
     examid?: string;
     exercise_lst?: string;
+    deadline?: string;
     selection?: string;
   }>;
 }
@@ -22,6 +23,7 @@ export default async function RunQuizPage({ searchParams }: RunQuizPageProps) {
   const count = Math.max(1, Number(params.count ?? "10") || 10);
   const examid = params.examid ? Number(params.examid) : undefined;
   const exerciseLst = params.exercise_lst;
+  const examDeadline = params.deadline ? Number(params.deadline) : undefined;
   const selection = params.selection
     ? params.selection.split(",").filter((s) => s.length > 0)
     : null;
@@ -50,10 +52,12 @@ export default async function RunQuizPage({ searchParams }: RunQuizPageProps) {
     <main className="flex flex-1 flex-col items-center">
       <Suspense fallback={<p className="py-10 text-sm text-muted-foreground">Loading…</p>}>
         <QuizRunner
+          key={`${quiz}-${exerciseLst ?? ""}-${examid ?? ""}`}
           {...runnerProps}
           isExam={examid !== undefined}
           examid={examid}
           exerciseLst={exerciseLst}
+          examDeadline={examDeadline}
           quizName={quiz}
         />
       </Suspense>

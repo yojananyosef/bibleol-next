@@ -104,17 +104,23 @@ export function getClassesOwned(me: UserRow, all = true): number[] {
 /** get_named_classes_owned — clases del usuario como owner o grader. */
 export function getNamedClassesOwned(me: UserRow, all = true): ClassRow[] {
   const db = getAppDb();
+  const normalize = (row: ClassRow): ClassRow => ({
+    ...row,
+    clid: row.clid ?? row.id,
+    clpass: row.clpass ?? row.password,
+    uid: row.uid ?? row.ownerid,
+  });
   if (all && isAdmin(me)) {
-    return db.prepare("SELECT * FROM bol_class").all() as ClassRow[];
+    return (db.prepare("SELECT * FROM bol_class").all() as ClassRow[]).map(normalize);
   }
-  const owned = db.prepare("SELECT * FROM bol_class WHERE ownerid = ?").all(me.id) as ClassRow[];
+  const owned = (db.prepare("SELECT * FROM bol_class WHERE ownerid = ?").all(me.id) as ClassRow[]).map(normalize);
   const graderClasses: ClassRow[] = [];
   const graderIds: number[] = [];
   for (const row of db.prepare("SELECT classid FROM bol_grader WHERE graderid = ?").all(me.id) as { classid: number }[]) {
     if (!graderIds.includes(row.classid)) {
       graderIds.push(row.classid);
       const cls = db.prepare("SELECT * FROM bol_class WHERE id = ?").get(row.classid) as ClassRow | undefined;
-      if (cls) graderClasses.push(cls);
+      if (cls) graderClasses.push(normalize(cls));
     }
   }
   return [...owned, ...graderClasses];

@@ -43,6 +43,8 @@ export interface QuizRunnerProps {
   isExam: boolean;
   examid?: number;
   exerciseLst?: string;
+  /** Deadline global del examen (unix s) — inyectado desde /exams/take. */
+  examDeadline?: number;
   quizName?: string;
 }
 
@@ -154,12 +156,15 @@ export function QuizRunner(props: QuizRunnerProps) {
             const next = parts.shift();
             const rest = parts.join("~");
             router.push(
-              `/quiz/run?quiz=${encodeURIComponent(next ?? "")}&count=10&examid=${props.examid}&exercise_lst=${encodeURIComponent(rest)}`,
+              `/quiz/run?quiz=${encodeURIComponent(next ?? "")}&count=10&examid=${props.examid}&exercise_lst=${encodeURIComponent(rest)}${props.examDeadline ? `&deadline=${props.examDeadline}` : ""}`,
             );
           } else {
             router.push("/exams/done");
           }
-          return true;
+          // En modo examen el runner ya navegó al siguiente ejercicio; el
+          // `.then(ok → navigateTo("text/select_quiz"))` del engine legacy
+          // no debe pisar la navegación.
+          return false;
         }
         router.push("/quiz");
         return true;
@@ -171,10 +176,14 @@ export function QuizRunner(props: QuizRunnerProps) {
     quiz.nextQuestion(true);
     refreshPanel(quiz);
 
-    // Timer (view_text_display.php 1:1: total = number_small_questions * time_seconds)
-    if (!props.isUnlimited && props.timeSeconds !== null) {
-      const totalTime = props.numberSmallQuestions * props.timeSeconds;
-      const deadline = Date.now() / 1000 + totalTime;
+    // Timer (view_text_display.php 1:1: total = number_small_questions * time_seconds;
+    // en examen el deadline global del examen (view_take_exam) manda si es menor).
+    if ((!props.isUnlimited && props.timeSeconds !== null) || props.examDeadline) {
+      const totalTime = props.isUnlimited ? Number.POSITIVE_INFINITY : props.numberSmallQuestions * (props.timeSeconds ?? 0);
+      const deadline = Math.min(
+        totalTime === Number.POSITIVE_INFINITY ? Number.POSITIVE_INFINITY : Date.now() / 1000 + totalTime,
+        props.examDeadline ?? Number.POSITIVE_INFINITY,
+      );
       const interval = setInterval(() => {
         const left = deadline - Date.now() / 1000;
         if (left < 0) {

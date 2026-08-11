@@ -86,14 +86,16 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
   - [x] `/enroll` — disponible/prioridad + enrol_before, enroll con diálogo de password, grant/revoke access, unenroll (`src/components/classes/enroll-panel.tsx`)
 - [x] E2E `tests/e2e/classes.e2e.test.ts` (6): crear clase con password visible, 500 para alumno en /classes, enroll con password erróneo/correcto, asignar usuario, grant access + unenroll (recarga de datos tras cada acción en enroll-panel), borrado
 
-## FASE 7 — Exámenes (Ctrl_exams, Mod_exams) [infra parcial: exam_mode probado e2e]
+## FASE 7 — Exámenes (Ctrl_exams, Mod_exams) [completada ✅ — rutas + servicios + UI + e2e]
 - [x] Corazón del flujo ya vivo: `updateExamQuizStatAction` (escribe bol_exam_finished + bol_exam_results), `/exams/done`, modo examen en QuizRunner (searchParams examid + exercise_lst encadenado) — **verificado en e2e con bol_exam + bol_exam_active sembrados** (`tests/e2e/editor.e2e.test.ts` test 4)
-- [ ] `src/lib/exams/exam-xml.ts`: parser XML `examcode` con sax (exercises/exercisename/numq/description + parámetros)
-- [ ] `src/lib/services/exams.ts` (← Mod_exams + Ctrl_exams): create_exam, create_exam_instance, edit_exam, delete_exam(_instance), get_active_exam, get_completed_exam_exercises, getDirContents/children
-- [ ] `src/lib/exams/instance.ts`: deadlines (bol_exam_status: start_time/deadline = min(end, start+duration)), teacher override
-- [ ] Rutas: `/exams` (manage/new), `/exams/active`, `/exams/take` (take_exam con encadenado `exercise_lst`), `/exams/done`, `/exams/quiz` (show_quiz en exam_mode)
-- [ ] Server Actions: save_exam, submit_exam_quiz (bol_exam_finished + bol_exam_results), update_exam_quiz_stat
-- [ ] Timer de examen en cliente (deadline → auto-finish)
+- [x] `src/lib/exams/exam-xml.ts`: build + parser XML `examcode` con sax (exercises/exercisename/numq/description + parámetros) + hash md5 (round-trip verificado en `tests/exams.test.ts`)
+- [x] `src/lib/services/exams.ts` (← Mod_exams + Ctrl_exams): create_exam, create_exam_instance, edit_exam, delete_exam(_instance), get_active_exam, get_completed_exam_exercises, getDirContents/children, takeExamData (exercises + status)
+- [x] `src/lib/exams/instance.ts`: deadlines (bol_exam_status: start_time/deadline = min(end, now+duration)) + examStage; el profesor ve end_time
+- [x] Rutas: `/exams` (manage + create/edit/delete), `/exams/active` (instancias Active/Future), `/exams/take` (redirect a `/quiz/run` con `exercise_lst` + `deadline`), `/exams/done`
+- [x] Server Actions: save_exam, delete_exam(_instance), create_exam_instance (datetimes → unix), get_take_exam, getDirContents
+- [x] Timer de examen en cliente: QuizRunner prop `examDeadline` → countdown min(quiz, examen) y auto-finish
+- [x] Fix de raíz en el encadenado: `sendStatistics` del runner devuelve `false` en modo examen (el `.then` del engine legacy ya no pisa la navegación) + `key` en `/quiz/run` para remontar el motor por ejercicio (soft navigation ya no reutiliza el quiz anterior)
+- [x] e2e completos en `tests/e2e/exams.e2e.test.ts` (2 tests: profesor crea/edita/programa + alumno toma el examen completo con encadenado, selects y teclado virtual)
 
 ## FASE 8 — Notas y estadísticas (Mod_grades, Mod_statistics, Ctrl_grades, Ctrl_statistics) [~30% — núcleo de estadística listo]
 - [x] `src/lib/services/statistics.ts` (← Mod_statistics, núcleo): newQuizTemplate, startQuiz, endQuiz (grading flag + tiempos + features), quizRequestedFeatures, hashCode + tests `tests/quiz/statistics.test.ts` — **quedan** get_score_by_date_user_templ, get_features_by_date_user_templ, allTemplates/Quizzes, get_quizzes_duration, purge

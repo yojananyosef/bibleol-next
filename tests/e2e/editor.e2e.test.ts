@@ -406,9 +406,8 @@ test("alumno: modo examen registra el resultado y finaliza", { timeout: 240_000 
     await page.getByRole("button", { name: "Finish section" }).waitFor();
     await answerAll(page, 10);
     await page.getByRole("button", { name: "Finish section", exact: true }).click();
-    // El examen hace doble navegación (exams/done y luego /quiz del legacy);
-    // la que aterriza es /quiz, después de enviar las estadísticas.
-    await page.waitForURL(/\/quiz$/, { timeout: 30_000 });
+    // El examen finaliza en /exams/done (el runner ya no re-navega a /quiz).
+    await page.waitForURL(`${BASE}/exams/done`, { timeout: 30_000 });
 
     const quiz = lastStudentQuiz();
     const checkDb = new Database(path.join(process.cwd(), "data", "app.db"));
