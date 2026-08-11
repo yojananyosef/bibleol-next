@@ -109,8 +109,11 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
 - [x] E2E `tests/e2e/stats.e2e.test.ts` (4): estudiante /stats, /stats/exercises, /stats/time; profesor /grades + tabla de notas 50% + CSV — datos de quiz sembrados (prepareQuiz/cleanup)
 
 ## FASE 9 — Periferia (post-hito core)
-- [ ] i18n completo: cargador langsrc (12 idiomas) + rol traductor (Ctrl_translate + Mod_translate + bol_language_en + bol_translation_languages)
-- [ ] `src/lib/i18n/`: diccionario de UI + `l10n_json` para cliente (← localization.ts/localization_general.ts)
+- [x] i18n: tramo interfaz + traductor — `language/langsrc/` copiado (11 idiomas); `src/lib/i18n/php-lang.ts` (parser `$lang`, comment/format/use_textarea, validado 1:1: en 944, da 759, nl 723, pt 897, zh 552×2…) + `loader.ts` (cache + overrides BD `bol_language_{abb}` + dbOverrides) + `translate.ts` (rol traductor: ensureLangTable con backticks para `-`, import, list, counts, getIfLinesPart/Untranslated, updateIfLines con variantes; gramática getGrammargroupList/count/getGrammarLinesPart/Untranslated/updateGrammarLines con bol_db_localize fallback a `data/meta/*.prop.pretty.json`; modifyLocalization, addLanguage) + `bol_language_comment` en schema+migración + `scripts/import-lang.mjs` (importa los 11 idiomas)
+- [x] Rutas traductor: `/translate` (→ if), `/translate/if` (paginación, sorting, selects grupo/lang, editor con revert/modif-indicator), `/translate/grammar` (db + name_prefix), `/translate/list` (progreso, enable/disable, add language) + server actions `src/app/actions/translate.ts` (guards translator) + tests `tests/i18n/*` (12)
+- [x] `src/lib/i18n/` diccionario de UI + l10n para clientes: `l10n.ts` (t/getL10nJson/getL10nObject); idioma de sesión vía `sessionLanguage()` + selector `LangSelect` (Ctrl_lang: `/lang?lang=xx` y `/lang/variant?variant=xx` como route handlers por cookies) — hito parcial (léxico en fase posterior)
+- [x] l10n aplicada a páginas principales: `src/app/page.tsx` (header con menu_lang + welcome/welcome2/intro_center, enlace traductor) + `src/app/login` + `src/app/sign-up` + `src/app/profile` (server wrapper pasa claves traducidas a los client components con `langLine(lang, group, key)`) — e2e `tests/e2e/translate.e2e.test.ts` (3: l10n home+login, editar cadena en /translate/if, grammar ETCBC4)
+- [ ] i18n léxico (translate_lex / edit_lex / update_lex + bol_lexicon_* + view_translate case 'lexicon') — diferido
 - [ ] URLs y refs bíblicas (Ctrl_urls + bol_bible_refs/bol_bible_urls/bol_heb_urls + view_select_gloss)
 - [ ] OAuth2 Google/Facebook (Ctrl_oauth2, bol_user.oauth2_login) — Auth.js
 - [ ] File manager + upload (Ctrl_file_manager, Ctrl_upload, valums) — route handlers multipart

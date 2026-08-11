@@ -42,7 +42,7 @@ async function login(page: Page, username: string): Promise<void> {
   await page.goto(`${BASE}/login`);
   await page.fill("#login_name", username);
   await page.fill("#password", username);
-  await Promise.all([page.waitForURL(`${BASE}/`), page.getByRole("button", { name: "Log in" }).click()]);
+  await Promise.all([page.waitForURL(`${BASE}/`), page.getByRole("button").first().click()]);
 }
 
 /** Prepara un quiz terminado del estudiante en ETCBC4/demo/demo1.3et. */

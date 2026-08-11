@@ -93,6 +93,16 @@ CREATE TABLE `bol_language_en` (
   PRIMARY KEY (`id`)
 );
 CREATE INDEX IF NOT EXISTS idx_bol_language_en_textgroup ON `bol_language_en` (textgroup);
+CREATE TABLE `bol_language_comment` (
+  `id` INTEGER NOT NULL,
+  `textgroup` TEXT NOT NULL,
+  `symbolic_name` TEXT NOT NULL,
+  `comment` TEXT,
+  `format` TEXT,
+  `use_textarea` INTEGER NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+);
+CREATE INDEX IF NOT EXISTS idx_bol_language_comment_tg ON `bol_language_comment` (textgroup);
 CREATE TABLE `bol_personal_font` (
   `id` INTEGER NOT NULL,
   `user_id` INTEGER NOT NULL,

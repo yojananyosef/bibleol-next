@@ -25,11 +25,11 @@ after(() => {
   db.close();
 });
 
-test("esquema: 34 tablas bol_* presentes", () => {
+test("esquema: 35 tablas bol_* presentes", () => {
   const rows = db
     .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'bol\\_%' ESCAPE '\\'")
     .all() as { name: string }[];
-  assert.equal(rows.length, 34);
+  assert.equal(rows.length, 35);
 });
 
 test("seeds del bolsetup.sql migrados 1:1", () => {

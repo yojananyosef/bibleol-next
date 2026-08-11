@@ -48,6 +48,11 @@ export function applySchema(db: Database.Database): void {
         id INTEGER NOT NULL, lex TEXT NOT NULL, language TEXT NOT NULL,
         url TEXT NOT NULL, icon TEXT NOT NULL, PRIMARY KEY (id)
       );
+      CREATE TABLE IF NOT EXISTS bol_language_comment (
+        id INTEGER NOT NULL, textgroup TEXT NOT NULL, symbolic_name TEXT NOT NULL,
+        comment TEXT, format TEXT, use_textarea INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (id)
+      );
     `);
     return;
   }

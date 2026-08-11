@@ -46,7 +46,7 @@ async function login(page: Page, username: string): Promise<void> {
   await page.goto(`${BASE}/login`);
   await page.fill("#login_name", username);
   await page.fill("#password", username);
-  await Promise.all([page.waitForURL(`${BASE}/`), page.getByRole("button", { name: "Log in" }).click()]);
+  await Promise.all([page.waitForURL(`${BASE}/`), page.getByRole("button").first().click()]);
 }
 
 /** Navega al directorio ETCBC4/demo del navegador de ejercicios. */

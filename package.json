@@ -9,9 +9,10 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test \"tests/*.test.ts\" \"tests/corpus/*.test.ts\" \"tests/quiz/*.test.ts\" \"tests/reader/*.test.ts\" \"tests/grades/*.test.ts\" \"tests/statistics/*.test.ts\"",
+    "test": "node --test \"tests/*.test.ts\" \"tests/corpus/*.test.ts\" \"tests/quiz/*.test.ts\" \"tests/reader/*.test.ts\" \"tests/grades/*.test.ts\" \"tests/statistics/*.test.ts\" \"tests/i18n/*.test.ts\"",
     "test:e2e": "bash scripts/browser-libs.sh && LD_LIBRARY_PATH=\"$(cat .e2e/ldpath)\" node --test --test-concurrency=1 \"tests/e2e/*.test.ts\"",
     "db:init": "node scripts/migrate-schema.ts",
+    "i18n:import": "node scripts/import-lang.mjs",
     "corpus:download": "node scripts/download-corpus.ts"
   },
   "dependencies": {
