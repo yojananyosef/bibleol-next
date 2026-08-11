@@ -114,7 +114,14 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
 - [x] `src/lib/i18n/` diccionario de UI + l10n para clientes: `l10n.ts` (t/getL10nJson/getL10nObject); idioma de sesión vía `sessionLanguage()` + selector `LangSelect` (Ctrl_lang: `/lang?lang=xx` y `/lang/variant?variant=xx` como route handlers por cookies) — hito parcial (léxico en fase posterior)
 - [x] l10n aplicada a páginas principales: `src/app/page.tsx` (header con menu_lang + welcome/welcome2/intro_center, enlace traductor) + `src/app/login` + `src/app/sign-up` + `src/app/profile` (server wrapper pasa claves traducidas a los client components con `langLine(lang, group, key)`) — e2e `tests/e2e/translate.e2e.test.ts` (3: l10n home+login, editar cadena en /translate/if, grammar ETCBC4)
 - [ ] i18n léxico (translate_lex / edit_lex / update_lex + bol_lexicon_* + view_translate case 'lexicon') — diferido
-- [ ] URLs y refs bíblicas (Ctrl_urls + bol_bible_refs/bol_bible_urls/bol_heb_urls + view_select_gloss)
+- [x] URLs y refs bíblicas — Ctrl_urls + Mod_urls + view_select_gloss + view_edit_url + bol_heb_urls (`bol_bible_refs`/`bol_bible_urls` en esquema; UI de pics en fase posterior)
+  - [x] `src/lib/services/urls.ts` (← Mod_urls): get_glosses/get_frequent_glosses (lexicons.db, 1 lexema/fila), get_heb_urls (bol_heb_urls), create/set/delete_heb_url, src_lang_short2long, get_heb/aram_buttons (26+2, rango sortorder) + `src/lib/services/icons.ts` (L_icon::css_class + ICON_NAMES en módulo client-safe)
+  - [x] `src/components/urls/gloss-selector.tsx` (← view_select_gloss: GlossBlock/GlossSelectorAll, botones frecuencia + alfabético, hrefs `urlEditorHref` con src_lang/buttonix) + `urls.css` (port de .gloss-wrapper/.gloss-wrapitem/.btn-gloss-selector de ol.css)
+  - [x] `src/components/urls/edit-url-table.tsx` (← view_edit_url): tabla lexema/english/icon/link/operations, dialog crear/editar (regex URL del legacy + validación missing/invalid_link), AlertDialog borrar, scrolltop ida y vuelta, iconos lucide por l-icon-*
+  - [x] Rutas: `/urls` (select_lang con all-no-greek: heb/aram botones + no_greek/no_latin) y `/urls/edit-url` (edit_url: buttonix −1 = frecuentes, botones→getGlosses) — `src/app/urls/`
+  - [x] Server Actions `src/app/actions/urls.ts`: changeUrlAction (id=-1 crea con lex+longlang, sino set) / deleteUrlAction, ambos con redirect requesturi+scrolltop (useActionState)
+  - [x] Menú admin "Gloss links" (menu_lang manage_gloss_links) en `src/app/page.tsx`; langLine i18n en ambas páginas
+  - [x] Tests: `tests/urls.test.ts` (7) + `tests/e2e/urls.e2e.test.ts` (3: menú por rol, botones/avisos, crear enlace en diálogo) — suite completa 229 tests + 3 e2e en verde
 - [ ] OAuth2 Google/Facebook (Ctrl_oauth2, bol_user.oauth2_login) — Auth.js
 - [ ] File manager + upload (Ctrl_file_manager, Ctrl_upload, valums) — route handlers multipart
 - [ ] pics (Ctrl_pic2db + bol_bible_refs.picture + resources.3bmoodle.dk)

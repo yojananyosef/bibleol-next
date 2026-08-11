@@ -50,6 +50,11 @@ export default async function Home() {
                   {langLine(lang, "menu", "users")}
                 </Link>
               )}
+              {users.isAdmin(me) && (
+                <Link href="/urls" className="text-primary underline-offset-4 hover:underline">
+                  {langLine(lang, "menu", "manage_gloss_links")}
+                </Link>
+              )}
               {users.isTranslator(me) && (
                 <Link href="/translate/if" className="text-primary underline-offset-4 hover:underline">
                   {langLine(lang, "menu", "translate_interface")}

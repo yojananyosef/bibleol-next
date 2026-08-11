@@ -1,0 +1,33 @@
+/* urls.css — Port de view_select_gloss.php + view_edit_url.php (styles/ol.css). */
+
+.gloss-wrapper {
+  display: flex;
+  flex-flow: row wrap;
+}
+
+.gloss-wrapitem {
+  flex-basis: 7.5em;
+  margin: 1px;
+}
+
+.btn.btn-gloss-selector {
+  margin: 0;
+  border: solid 2px #43b02a;
+  color: #43b02a;
+  background-color: white;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+.btn.btn-gloss-selector-active {
+  margin: 0;
+  border: solid 2px #43b02a;
+  color: white;
+  background-color: #43b02a;
+}
+
+.btn.btn-gloss-selector:hover {
+  background-color: #389323;
+  color: white;
+  border-color: #389323;
+}
