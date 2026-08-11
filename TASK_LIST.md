@@ -97,13 +97,16 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
 - [x] Fix de raíz en el encadenado: `sendStatistics` del runner devuelve `false` en modo examen (el `.then` del engine legacy ya no pisa la navegación) + `key` en `/quiz/run` para remontar el motor por ejercicio (soft navigation ya no reutiliza el quiz anterior)
 - [x] e2e completos en `tests/e2e/exams.e2e.test.ts` (2 tests: profesor crea/edita/programa + alumno toma el examen completo con encadenado, selects y teclado virtual)
 
-## FASE 8 — Notas y estadísticas (Mod_grades, Mod_statistics, Ctrl_grades, Ctrl_statistics) [~30% — núcleo de estadística listo]
-- [x] `src/lib/services/statistics.ts` (← Mod_statistics, núcleo): newQuizTemplate, startQuiz, endQuiz (grading flag + tiempos + features), quizRequestedFeatures, hashCode + tests `tests/quiz/statistics.test.ts` — **quedan** get_score_by_date_user_templ, get_features_by_date_user_templ, allTemplates/Quizzes, get_quizzes_duration, purge
-- [ ] `src/lib/grades/scales.ts` (← calc_grades_helper.php): esquemas percent/decimal/usletter/german + cálculo porcentaje→nota
-- [ ] `src/lib/statistics/period.ts` (← Statistics_timeperiod.php)
-- [ ] Rutas: `/stats` (show_stat student), `/stats/time`, `/stats/exercises`, `/grades` (teacher: classes/exams/exercises; progress charts)
-- [ ] Gráficas con recharts (sustituye RGraph: graphing.js + handle_legend.js → componentes React)
-- [ ] Export CSV/Excel (← table2csv/table2excel → lib client-side)
+## FASE 8 — Notas y estadísticas (Mod_grades, Mod_statistics, Ctrl_grades, Ctrl_statistics) [completada ✅ — rutas + servicios + gráficas + export + e2e]
+- [x] `src/lib/services/statistics.ts` (← Mod_statistics, núcleo): newQuizTemplate, startQuiz, endQuiz (grading flag + tiempos + features), quizRequestedFeatures, hashCode, allTemplates/allQuizzes, getScoreByDateUserTemplGrades (con featpermin real), getFeaturesByDateUserTempl (req + features por fecha), getClassesForPathname, maySeeNongraded, getScoreByUserActiveExam, getQuizDetail (hint de disp_type/disp_value) + tests `tests/quiz/statistics.test.ts` + `tests/statistics/report.test.ts` (15) — fix división entera SQLite (`* 1.0`), `getExamsForClass` con `exam_name`, `getPathnamesForClass(classid, studentIds?)` sin `.3et`
+- [x] `src/lib/grades/scales.ts` (← calc_grades_helper.php): esquemas percent/decimal/usletter/german + cálculo porcentaje→nota (+ tests `tests/statistics/scales.test.ts`, 6)
+- [x] `src/lib/statistics/period.ts` (← Statistics_timeperiod.php): StatisticsPeriod "short"/"long", MAX_PERIOD 26 semanas, utilidades de cadena/fecha (+ tests `tests/statistics/period.test.ts`, 9)
+- [x] Rutas alumno: `/stats` (show_stat: quizzes + req features con l10n), `/stats/time` (horas/semana + horas/ejercicio), `/stats/exercises` (scatter % + HBar features, toggle nongraded)
+- [x] Rutas profesor: `/grades` (clases propias/matriculadas con links Exercises+Exams), `/grades/class/[classid]/exercises` (notas + gráficas por fecha + % por feature), `/grades/class/[classid]/exams` (notas ponderadas por examen), `/grades/class/[classid]/quiz/[quizzid]` (detalle por pregunta)
+- [x] Gráficas con recharts (`src/components/stats/charts.tsx`): WeeklyBar, ExerciseHours, DailyScatter, DailyLines, FeatureBars, FeatureGroupedBars (sustituye RGraph)
+- [x] Export CSV/Excel client-side (`src/components/stats/export-buttons.tsx`) + GradeTable colapsable (header "hgst grade" + detalle)
+- [x] L10n de features (`src/lib/statistics/feature-l10n.ts`): loadFeatureL10n desde bol_db_localize / prop.pretty.json con stripSortIndex
+- [x] E2E `tests/e2e/stats.e2e.test.ts` (4): estudiante /stats, /stats/exercises, /stats/time; profesor /grades + tabla de notas 50% + CSV — datos de quiz sembrados (prepareQuiz/cleanup)
 
 ## FASE 9 — Periferia (post-hito core)
 - [ ] i18n completo: cargador langsrc (12 idiomas) + rol traductor (Ctrl_translate + Mod_translate + bol_language_en + bol_translation_languages)

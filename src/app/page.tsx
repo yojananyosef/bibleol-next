@@ -32,6 +32,12 @@ export default async function Home() {
                   Users
                 </Link>
               )}
+              <Link href="/grades" className="text-primary underline-offset-4 hover:underline">
+                Grades
+              </Link>
+              <Link href="/stats" className="text-primary underline-offset-4 hover:underline">
+                Stats
+              </Link>
               <Link href="/profile" className="text-primary underline-offset-4 hover:underline">
                 Profile
               </Link>
