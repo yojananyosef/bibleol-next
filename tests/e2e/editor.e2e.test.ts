@@ -237,3 +237,200 @@ test("alumno: ejecuta el ejercicio guardado por el profesor", { timeout: 240_000
     await ctx.close();
   }
 });
+
+/** Prepara un ejercicio en ETCBC4/demo como teacher (mismo flujo del test 2,
+ *  con timer opcional configurado en el tab Timer) y devuelve el .3et creado. */
+async function prepareExercise(browser: Browser, opts: { timerSeconds?: number } = {}): Promise<string> {
+  const teacherCtx = await browser.newContext();
+  const teacherPage = await teacherCtx.newPage();
+  const file = `${newName()}.3et`;
+  try {
+    await login(teacherPage, "teacher");
+    await openDemoDir(teacherPage);
+    await teacherPage.getByRole("link", { name: "New exercise" }).click();
+    await teacherPage.waitForURL(/\/quiz\/editor\?dir=/);
+    await editorReady(teacherPage);
+    await teacherPage.getByRole("tab", { name: "Passages" }).click();
+    await teacherPage.locator("ul li input[type='checkbox']:visible").first().check();
+    await teacherPage.getByRole("tab", { name: "Features" }).click();
+    const featureRows = teacherPage.locator("table tbody tr");
+    await featureRows.first().getByLabel("Show", { exact: true }).check();
+    await featureRows
+      .filter({ hasText: "Lexical stem" })
+      .first()
+      .getByLabel("Request", { exact: true })
+      .check();
+    if (opts.timerSeconds !== undefined) {
+      await teacherPage.getByRole("tab", { name: "Timer" }).click();
+      await teacherPage.locator("label", { hasText: /^Timer:/ }).locator("select").selectOption("on");
+      await teacherPage
+        .locator("label", { hasText: /^Seconds:/ })
+        .locator("select")
+        .selectOption(String(opts.timerSeconds));
+    }
+    await teacherPage.getByRole("button", { name: "Save", exact: true }).click();
+    await teacherPage.getByText("Specify File Name").waitFor();
+    await teacherPage.getByLabel("Enter filename (without final “.3et”)").fill(file.replace(".3et", ""));
+    await teacherPage.getByRole("dialog").getByRole("button", { name: "Save", exact: true }).click();
+    await teacherPage.waitForURL(/\/quiz\?path=ETCBC4%2Fdemo/);
+    return file;
+  } finally {
+    await teacherCtx.close();
+  }
+}
+
+/** Alumno: navegador → Start → seleccionar el primer libro → arrancar el quiz. */
+async function startQuiz(page: Page, file: string): Promise<void> {
+  await login(page, "student");
+  await openDemoDir(page);
+  await page.locator("li", { hasText: file }).getByRole("link", { name: "Start" }).click();
+  await page.waitForURL(/\/quiz\/universe/);
+  await page.getByText("Select passage").waitFor();
+  const firstCheckbox = page.locator("ul ul li input[type='checkbox']").first();
+  await firstCheckbox.waitFor();
+  await firstCheckbox.check();
+  await page.getByRole("button", { name: /Start quiz/ }).click();
+  await page.waitForURL(/\/quiz\/run\?quiz=/);
+  await page.getByRole("button", { name: "Check answer" }).waitFor();
+}
+
+/** Contesta las `count` preguntas: input → Check answer → Next question. */
+async function answerAll(page: Page, count: number): Promise<void> {
+  for (let qi = 0; qi < count; qi++) {
+    const reqInput = page.locator("tbody input").first();
+    await reqInput.waitFor();
+    await reqInput.fill(`answer ${qi}`);
+    await page.getByRole("button", { name: "Check answer", exact: true }).click();
+    await page.locator("td", { hasText: /^[✓✗]$/ }).first().waitFor();
+    if (qi < count - 1) {
+      await page.getByRole("button", { name: "Next question", exact: true }).click();
+    }
+  }
+}
+
+/** Último quiz registrado del alumno (lectura con conexión propia). */
+function lastStudentQuiz(): { id: number; grading: number; tot_questions: number } {
+  const appDb = new Database(path.join(process.cwd(), "data", "app.db"));
+  const row = appDb
+    .prepare("SELECT id, grading, tot_questions FROM bol_sta_quiz WHERE userid = (SELECT id FROM bol_user WHERE username = 'student') ORDER BY id DESC LIMIT 1")
+    .get() as { id: number; grading: number; tot_questions: number } | undefined;
+  appDb.close();
+  assert.ok(row, "debe haber un bol_sta_quiz para el alumno");
+  return row;
+}
+
+/** Número de preguntas registradas de un quiz. */
+function questionCountOf(quizid: number): number {
+  const appDb = new Database(path.join(process.cwd(), "data", "app.db"));
+  const { n } = appDb.prepare("SELECT COUNT(*) AS n FROM bol_sta_question WHERE quizid = ?").get(quizid) as {
+    n: number;
+  };
+  appDb.close();
+  return n;
+}
+
+test("alumno: SAVE outcome guarda las estadísticas sin calificar", { timeout: 240_000 }, async () => {
+  const ctx: BrowserContext = await browser.newContext();
+  const page: Page = await ctx.newPage();
+  const file = await prepareExercise(browser);
+  const filePath = path.join(QUIZZES_ROOT, QUIZ_DIR, file);
+
+  try {
+    await startQuiz(page, file);
+    await answerAll(page, 10);
+    await page.getByRole("button", { name: "SAVE outcome", exact: true }).click();
+    await page.waitForURL(/\/quiz$/);
+
+    const quiz = lastStudentQuiz();
+    assert.equal(quiz.grading, 0, "SAVE outcome no debe calificar");
+    assert.ok(quiz.tot_questions > 0, "tot_questions debe quedar calculado");
+    assert.ok(questionCountOf(quiz.id) > 0, "debe haber preguntas registradas");
+  } finally {
+    if (existsSync(filePath)) unlinkSync(filePath);
+    await ctx.close();
+  }
+});
+
+test("alumno: el temporizador envía las estadísticas al agotarse", { timeout: 240_000 }, async () => {
+  const ctx: BrowserContext = await browser.newContext();
+  const page: Page = await ctx.newPage();
+  const file = await prepareExercise(browser, { timerSeconds: 1 });
+  const filePath = path.join(QUIZZES_ROOT, QUIZ_DIR, file);
+
+  try {
+    await startQuiz(page, file);
+    // time_seconds = 4 → 1s efectivo × 24 features (id2FeatVal) ≈ 24s hasta el
+    // auto-submit; el temporizador envía las estadísticas y redirige a /quiz.
+    await page.waitForURL(/\/quiz$/, { timeout: 60_000 });
+
+    const quiz = lastStudentQuiz();
+    assert.equal(quiz.grading, 1, "el envío automático del temporizador califica");
+    assert.ok(quiz.tot_questions > 0, "tot_questions debe quedar calculado");
+    assert.ok(questionCountOf(quiz.id) > 0, "debe haber preguntas registradas");
+  } finally {
+    if (existsSync(filePath)) unlinkSync(filePath);
+    const appDb = new Database(path.join(process.cwd(), "data", "app.db"));
+    appDb.prepare("DELETE FROM bol_exerciseowner WHERE pathname = ?").run(`${QUIZ_DIR}/${file}`);
+    appDb.close();
+    await ctx.close();
+  }
+});
+
+test("alumno: modo examen registra el resultado y finaliza", { timeout: 240_000 }, async () => {
+  // Todavía no hay UI de exámenes: se inicializa el examen (definición +
+  // instancia activa, la que referencian activeexamid y bol_exam_results)
+  // directamente en la BD, como haría el flujo legacy de activación.
+  const setupDb = new Database(path.join(process.cwd(), "data", "app.db"));
+  const { lastInsertRowid } = setupDb
+    .prepare("INSERT INTO bol_exam (exam_name, ownerid, examcode, examcodehash, archived) VALUES (?, ?, ?, ?, 0)")
+    .run("e2e examen", 2, "e2e", "e2e");
+  const examDefId = Number(lastInsertRowid);
+  const now = Math.floor(Date.now() / 1000);
+  const { lastInsertRowid: activeRow } = setupDb
+    .prepare(
+      "INSERT INTO bol_exam_active (exam_name, class_id, exam_start_time, exam_end_time, exam_length, exam_id, instance_name) VALUES (?, ?, ?, ?, NULL, ?, ?)",
+    )
+    .run("e2e examen", 1, now, now + 3600, examDefId, "e2e instancia");
+  setupDb.close();
+  const examid = Number(activeRow);
+
+  const ctx: BrowserContext = await browser.newContext();
+  const page: Page = await ctx.newPage();
+  const file = await prepareExercise(browser);
+  const filePath = path.join(QUIZZES_ROOT, QUIZ_DIR, file);
+
+  try {
+    await login(page, "student");
+    await page.goto(`${BASE}/quiz/run?quiz=${encodeURIComponent(`${QUIZ_DIR}/${file}`)}&count=10&examid=${examid}`);
+    await page.getByRole("button", { name: "Check answer" }).waitFor();
+    await page.getByRole("button", { name: "Finish section" }).waitFor();
+    await answerAll(page, 10);
+    await page.getByRole("button", { name: "Finish section", exact: true }).click();
+    // El examen hace doble navegación (exams/done y luego /quiz del legacy);
+    // la que aterriza es /quiz, después de enviar las estadísticas.
+    await page.waitForURL(/\/quiz$/, { timeout: 30_000 });
+
+    const quiz = lastStudentQuiz();
+    const checkDb = new Database(path.join(process.cwd(), "data", "app.db"));
+    assert.equal(quiz.grading, 1, "en modo examen el quiz se califica");
+    const res = checkDb
+      .prepare("SELECT quizid FROM bol_exam_results WHERE userid = (SELECT id FROM bol_user WHERE username = 'student') AND activeexamid = ?")
+      .get(examid) as { quizid: number } | undefined;
+    assert.ok(res, "debe quedar registrado en bol_exam_results");
+    assert.equal(res.quizid, quiz.id, "quizid del resultado = quiz del alumno");
+    const finished = checkDb
+      .prepare("SELECT COUNT(*) AS n FROM bol_exam_finished WHERE userid = (SELECT id FROM bol_user WHERE username = 'student') AND activeexamid = ?")
+      .get(examid) as { n: number };
+    assert.ok(finished.n > 0, "debe quedar marcado como finalizado");
+    checkDb.close();
+  } finally {
+    if (existsSync(filePath)) unlinkSync(filePath);
+    const cleanDb = new Database(path.join(process.cwd(), "data", "app.db"));
+    cleanDb.prepare("DELETE FROM bol_exam_results WHERE activeexamid = ?").run(examid);
+    cleanDb.prepare("DELETE FROM bol_exam_finished WHERE activeexamid = ?").run(examid);
+    cleanDb.prepare("DELETE FROM bol_exam_active WHERE id = ?").run(examid);
+    cleanDb.prepare("DELETE FROM bol_exam WHERE id = ?").run(examDefId);
+    cleanDb.close();
+    await ctx.close();
+  }
+});
