@@ -13,7 +13,8 @@
     "test:e2e": "bash scripts/browser-libs.sh && LD_LIBRARY_PATH=\"$(cat .e2e/ldpath)\" node --test --test-concurrency=1 \"tests/e2e/*.test.ts\"",
     "db:init": "node scripts/migrate-schema.ts",
     "i18n:import": "node scripts/import-lang.mjs",
-    "corpus:download": "node scripts/download-corpus.ts"
+    "corpus:download": "node scripts/download-corpus.ts",
+    "lexicons:build": "node scripts/build-lexicons.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

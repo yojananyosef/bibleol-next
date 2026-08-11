@@ -20,6 +20,9 @@ Lógica de negocio, esquema `bol_*` y flujo de usuario 1:1 con el legacy. Sin fu
 | `bun run db:init` | Crea la BD SQLite con el esquema `bol_*` + seeds demo (`scripts/migrate-schema.ts`) |
 | `bun run i18n:import` | Importa los diccionarios `language/langsrc/*` a `bol_language_comment` |
 | `bun run corpus:download` | Descarga los corpus Emdros (ETCBC4, nestle1904, jvulgate) a `data/corpus/` (gitignored) |
+| `bun run lexicons:build` | Regenera `data/lexicons.db` desde `data/lexicons/*.csv` + meta legacy (`scripts/build-lexicons.ts`) |
+
+> `bun run` puede crashear en WSL con better-sqlite3 (panic NAPI, bug de Bun). Fallback: `pnpm run <script>` (pnpm instalado globalmente; config en `pnpm-workspace.yaml`). Los scripts usan `node`, no el runtime de bun.
 
 ## Estructura
 

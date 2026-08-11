@@ -1,0 +1,8 @@
+pmOnFail: ignore
+onlyBuiltDependencies:
+  - better-sqlite3
+  - sharp
+  - unrs-resolver
+allowBuilds:
+  better-sqlite3: false
+  unrs-resolver: false

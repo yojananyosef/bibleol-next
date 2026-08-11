@@ -24,6 +24,28 @@ import { DATA_DIR } from "../src/lib/db/sqlite.ts";
 const SRC_DIR = path.join(DATA_DIR, "lexicons");
 const OUT = path.join(DATA_DIR, "lexicons.db");
 
+/** Mapa WIT→latino del legacy (migración 007_etcbc4_v8.php, wit2sort). */
+const W2S_MAP: Record<string, string> = {
+  ">": "a", B: "b", G: "c", D: "d", H: "e", W: "f", Z: "g", X: "h", V: "i",
+  J: "j", k: "k", K: "k", L: "l", m: "m", M: "m", n: "n", N: "n", S: "o",
+  "<": "p", p: "q", P: "q", y: "r", Y: "r", Q: "s", R: "t", "#": "u",
+  C: "u", F: "u", T: "v", "=": "", _: " ", "[": "", "/": "",
+};
+
+/** Convierte un lexema WIT en sortorder (igual que wit2sort del legacy). */
+function wit2sort(wit: string): string {
+  let out = "";
+  for (const ch of wit) out += W2S_MAP[ch] ?? "";
+  return out;
+}
+
+interface MetaRow {
+  sortorder: string;
+  firstbook: string;
+  firstchapter: number;
+  firstverse: number;
+}
+
 /** Columnas de verbal stem por fuente (nombre en CSV → valor verbal_stem_t). */
 const STEM_COLS: Record<string, [string, string][]> = {
   heb: [
@@ -92,6 +114,33 @@ interface MasterRow {
 const db = new Database(OUT);
 db.pragma("journal_mode = WAL");
 
+/** Carga lexicon_meta.csv (src,key1,key2,sortorder,firstbook,firstchapter,firstverse). */
+function readMeta(): Record<string, Map<string, MetaRow>> {
+  const meta: Record<string, Map<string, MetaRow>> = {};
+  const file = path.join(SRC_DIR, "lexicon_meta.csv");
+  if (!fileExists(file)) return meta;
+  for (const row of parseCsv(readFileSync(file, "utf8")).slice(1)) {
+    if (row.length < 7) continue;
+    const [src, key1, key2, sortorder, firstbook] = row;
+    const firstchapter = parseInt(row[5], 10) || 0;
+    const firstverse = parseInt(row[6], 10) || 0;
+    const mkey = src === "greek" ? key1 : `${key1}\u0000${key2}`;
+    (meta[src] ??= new Map()).set(mkey, { sortorder, firstbook, firstchapter, firstverse });
+  }
+  return meta;
+}
+
+const metaBySrc = readMeta();
+
+/** Primeras apariciones arameas sin entrada en bolsetup (calculadas del corpus ETCBC4). */
+const ARAM_FIRST: Record<string, [string, string, number, number]> = {
+  "JZB[": ["jgb", "Daniel", 3, 15],
+  "JY>[": ["jra", "Esra", 6, 15],
+  "MRV[": ["mti", "Daniel", 7, 4],
+  "PRS[": ["qto", "Daniel", 5, 25],
+  "TQL[": ["vsl", "Daniel", 5, 25],
+};
+
 // Tabla del legacy bol_heb_urls (se deja vacía, como en la BD actual)
 db.exec(`DROP TABLE IF EXISTS heb_urls; CREATE TABLE heb_urls (lex TEXT, language TEXT, url TEXT, icon TEXT)`);
 
@@ -150,19 +199,34 @@ const buildSource = db.transaction((src: string, spec: SourceSpec) => {
   db.exec(`DROP TABLE IF EXISTS lexicon_${spec.table}`);
   let insMaster: Database.Statement;
   if (src === "heb" || src === "aram") {
-    db.exec(`CREATE TABLE lexicon_${spec.table} (id INTEGER PRIMARY KEY, lex TEXT, vs TEXT, tally INTEGER, vocalized_lexeme_utf8 TEXT, roman TEXT, sortorder INTEGER)`);
-    insMaster = db.prepare(`INSERT INTO lexicon_${spec.table} (id, lex, vs, tally, vocalized_lexeme_utf8, roman, sortorder) VALUES (?,?,?,?,?,?,?)`);
+    db.exec(`CREATE TABLE lexicon_${spec.table} (id INTEGER PRIMARY KEY, lex TEXT, vs TEXT, tally INTEGER, vocalized_lexeme_utf8 TEXT, roman TEXT, sortorder TEXT, firstbook TEXT, firstchapter INTEGER, firstverse INTEGER)`);
+    insMaster = db.prepare(`INSERT INTO lexicon_${spec.table} (id, lex, vs, tally, vocalized_lexeme_utf8, roman, sortorder, firstbook, firstchapter, firstverse) VALUES (?,?,?,?,?,?,?,?,?,?)`);
   } else if (src === "greek") {
-    db.exec(`CREATE TABLE lexicon_${spec.table} (id INTEGER PRIMARY KEY, strongs INTEGER, strongs_unreliable INTEGER, lemma TEXT, tally INTEGER, sortorder INTEGER)`);
-    insMaster = db.prepare(`INSERT INTO lexicon_${spec.table} (id, strongs, strongs_unreliable, lemma, tally, sortorder) VALUES (?,?,?,?,?,?)`);
+    db.exec(`CREATE TABLE lexicon_${spec.table} (id INTEGER PRIMARY KEY, strongs INTEGER, strongs_unreliable INTEGER, lemma TEXT, tally INTEGER, sortorder TEXT, firstbook TEXT, firstchapter INTEGER, firstverse INTEGER)`);
+    insMaster = db.prepare(`INSERT INTO lexicon_${spec.table} (id, strongs, strongs_unreliable, lemma, tally, sortorder, firstbook, firstchapter, firstverse) VALUES (?,?,?,?,?,?,?,?,?)`);
   } else {
-    db.exec(`CREATE TABLE lexicon_${spec.table} (id INTEGER PRIMARY KEY, lemma TEXT, part_of_speech TEXT, tally INTEGER, sortorder INTEGER)`);
-    insMaster = db.prepare(`INSERT INTO lexicon_${spec.table} (id, lemma, part_of_speech, tally, sortorder) VALUES (?,?,?,?,?)`);
+    db.exec(`CREATE TABLE lexicon_${spec.table} (id INTEGER PRIMARY KEY, lemma TEXT, part_of_speech TEXT, tally INTEGER, sortorder TEXT, firstbook TEXT, firstchapter INTEGER, firstverse INTEGER)`);
+    insMaster = db.prepare(`INSERT INTO lexicon_${spec.table} (id, lemma, part_of_speech, tally, sortorder, firstbook, firstchapter, firstverse) VALUES (?,?,?,?,?,?,?,?)`);
   }
+
+  const meta = metaBySrc[spec.table] ?? new Map<string, MetaRow>();
 
   master.forEach((m, i) => {
     masterKeyOf.set(m.key, i + 1);
-    insMaster.run(i + 1, ...m.values, i);
+    let metaRow = meta.get(m.key);
+    if (!metaRow && (src === "heb" || src === "aram")) {
+      const sortorder = wit2sort(String(m.values[0]));
+      const first = src === "aram" ? ARAM_FIRST[String(m.values[0])] : undefined;
+      metaRow = {
+        sortorder,
+        firstbook: first?.[1] ?? "",
+        firstchapter: first?.[2] ?? 0,
+        firstverse: first?.[3] ?? 0,
+      };
+    } else if (!metaRow) {
+      metaRow = { sortorder: String(i), firstbook: "", firstchapter: 0, firstverse: 0 };
+    }
+    insMaster.run(i + 1, ...m.values, metaRow.sortorder, metaRow.firstbook, metaRow.firstchapter, metaRow.firstverse);
   });
 
   // Tablas de gloss por idioma: mismas filas (mismo orden) que el maestro
