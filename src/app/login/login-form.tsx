@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { loginAction, type ActionResult } from "@/app/actions/auth";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,9 +16,19 @@ interface L10n {
   submit: string;
   forgot: string;
   create: string;
+  google: string;
+  facebook: string;
 }
 
-export function LoginForm({ l10n }: { l10n: L10n }) {
+export function LoginForm({
+  l10n,
+  googleEnabled,
+  facebookEnabled,
+}: {
+  l10n: L10n;
+  googleEnabled: boolean;
+  facebookEnabled: boolean;
+}) {
   const [state, formAction, pending] = useActionState<ActionResult | null, FormData>(loginAction, null);
 
   return (
@@ -59,6 +69,20 @@ export function LoginForm({ l10n }: { l10n: L10n }) {
               </Link>
             </p>
           </div>
+          {(googleEnabled || facebookEnabled) && (
+            <div className="mt-4 space-y-2 border-t pt-4">
+              {googleEnabled && (
+                <Link href="/oauth2/start?authority=google" className={buttonVariants({ variant: "outline", className: "w-full" })}>
+                  {l10n.google}
+                </Link>
+              )}
+              {facebookEnabled && (
+                <Link href="/oauth2/start?authority=facebook" className={buttonVariants({ variant: "outline", className: "w-full" })}>
+                  {l10n.facebook}
+                </Link>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </main>

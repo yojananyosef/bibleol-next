@@ -77,6 +77,14 @@ export async function checkLoggedInLocal(): Promise<users.UserRow> {
   return u;
 }
 
+/** check_logged_in_oauth2(authority): logueado con esa autoridad OAuth2. */
+export async function checkLoggedInOauth2(authority: "google" | "facebook"): Promise<users.UserRow> {
+  const u = await currentUser();
+  if (!users.isLoggedIn(u)) throw new DataException(MSG.mustBeLoggedIn);
+  if (u.oauth2_login !== authority) throw new DataException(`must_be_${authority}`);
+  return u;
+}
+
 /** Idioma de la sesión (preferencia del usuario) con fallback "en". */
 export async function sessionLanguage(): Promise<string> {
   const session = await getSession();

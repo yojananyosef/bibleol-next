@@ -5,12 +5,7 @@ import { acceptPolicyNoAction, acceptPolicyYesAction, type ActionResult } from "
 import type { UserRow } from "@/lib/services/users";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-const POLICY_TEXT = `(en)
-Bible Online Learner is a free service for learning the original languages of the Bible.
-By using this service you agree to use it for educational purposes only, and you
-acknowledge that the texts and quizzes are provided "as is" without warranty.
-(Privacy policy in effect since 2017-12-04.)`;
+import { PolicyText } from "./policy-text";
 
 export function PolicyAccept({ me }: { me: UserRow }) {
   const [state, formAction] = useActionState<ActionResult | null, FormData>(acceptPolicyYesAction, null);
@@ -28,9 +23,7 @@ export function PolicyAccept({ me }: { me: UserRow }) {
             <CardTitle className="text-base">Do you accept the privacy policy?</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="mb-4 max-h-64 overflow-y-auto whitespace-pre-line rounded border bg-muted/40 p-4 text-sm">
-              {POLICY_TEXT}
-            </div>
+            <PolicyText />
             {state?.error && (
               <p className="mb-4 rounded border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {state.error}

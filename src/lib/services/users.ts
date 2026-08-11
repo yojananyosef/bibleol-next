@@ -306,7 +306,9 @@ export function newOauth2User(
   firstName: string,
   lastName: string,
   familyNameFirst: boolean,
-  email: string | null
+  email: string | null,
+  language = "en",
+  variant = "",
 ): UserRow & { id: number } | null {
   const db = getAppDb();
   const username = authority === "google" ? `ggl_${oauth2UserId}` : `fcb_${oauth2UserId}`;
@@ -332,9 +334,19 @@ export function newOauth2User(
   u.oauth2_login = authority;
   u.created_time = now;
   u.last_login = now;
-  u.preflang = "en";
+  u.preflang = language;
+  u.prefvariant = variant;
   setUser(u);
   return u as UserRow & { id: number };
+}
+
+/** Usuario OAuth2 existente (ggl_ / fcb_ + id) por id del proveedor. */
+export function getOauth2User(authority: "google" | "facebook", oauth2UserId: string): UserRow | null {
+  const username = authority === "google" ? `ggl_${oauth2UserId}` : `fcb_${oauth2UserId}`;
+  const row = getAppDb()
+    .prepare(`${SELECT_USER} WHERE oauth2_login=? AND username=?`)
+    .get(authority, username) as UserRow | undefined;
+  return row ? rowToUser(row) : null;
 }
 
 // ---- Expiración de cuentas (cron) ----

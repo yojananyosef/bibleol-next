@@ -1,12 +1,14 @@
 import Link from "next/link";
-import { currentUserOrDummy } from "@/lib/auth/guards";
+import { currentUserOrDummy, sessionLanguage } from "@/lib/auth/guards";
 import * as users from "@/lib/services/users";
-import { sessionLanguage } from "@/lib/auth/guards";
 import { getSession } from "@/lib/auth/session";
+import { getOAuth2Flow } from "@/lib/oauth2/cookie";
 import { langText, langLine } from "@/lib/i18n/loader";
 import { getIfLanguages } from "@/lib/services/translate";
 import { getConfig } from "@/lib/config";
 import { PolicyAccept } from "./policy-accept";
+import { parsePolicyText } from "./policy-text";
+import { NewOAuth2User } from "./new-oauth2-user";
 import { LogoutButton } from "./logout-button";
 import { LangSelect } from "@/components/i18n/lang-select";
 
@@ -14,8 +16,30 @@ export default async function Home() {
   const me = await currentUserOrDummy();
   const lang = await sessionLanguage();
 
+  // Ctrl_main_page: ¿nuevo usuario OAuth2 sin aceptar política?
   if (users.isLoggedInNoAccept(me)) {
     users.generateAcceptanceCode(me);
+    const flow = await getOAuth2Flow();
+    if (flow?.newOauth2 && me.oauth2_login === flow.newOauth2) {
+      const { text, lang: policyLang } = parsePolicyText(langLine(lang, "privacy", "privacy_text"));
+      return (
+        <NewOAuth2User
+          me={me}
+          policyText={text}
+          policyLang={policyLang}
+          l10n={{
+            welcomeHead: langLine(lang, "login", `welcome_new_${flow.newOauth2}_user`),
+            yourName: langLine(lang, "login", `your_${flow.newOauth2}_name`),
+            yourNameNoEmail: langLine(lang, "login", `your_${flow.newOauth2}_name_no_email`),
+            enjoy: langLine(lang, "login", "enjoy"),
+            firstYouMustAccept: langLine(lang, "privacy", "first_you_must_accept_policy"),
+            doYouAccept: langLine(lang, "privacy", "do_you_accept"),
+            yes: langLine(lang, "common", "yes"),
+            no: langLine(lang, "common", "no"),
+          }}
+        />
+      );
+    }
     return <PolicyAccept me={me} />;
   }
 

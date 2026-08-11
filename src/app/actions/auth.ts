@@ -5,6 +5,8 @@ import { MIN_PW_LENGTH, generateHexKey, generatePw } from "@/lib/auth/password";
 import { setSession, clearSession, getSession } from "@/lib/auth/session";
 import * as users from "@/lib/services/users";
 import { currentUser, currentUserOrDummy } from "@/lib/auth/guards";
+import { getOAuth2Flow, clearOAuth2Flow } from "@/lib/oauth2/cookie";
+import { revokeGooglePermissions } from "@/lib/oauth2/oauth2";
 import { sendMail } from "@/lib/mail";
 
 export type ActionResult = { error?: string; ok?: true; noEmail?: true; sent?: true; linkBad?: true };
@@ -193,6 +195,56 @@ export async function deleteMeAction(): Promise<ActionResult> {
   users.deleteUser(me.id!);
   await clearSession();
   redirect("/login");
+}
+
+// ---- Ctrl_users::delete_me_google / delete_me_facebook + profile oauth2 ----
+
+/** Ctrl_users::delete_me_google | delete_me_facebook (delete_common). */
+export async function deleteMeOauth2Action(
+  prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  const authority = clean(formData.get("authority"));
+  if (authority !== "google" && authority !== "facebook") return { error: "illegal_lang_code" };
+  const me = await currentUser();
+  if (!users.isLoggedIn(me)) return { error: "must_be_logged_in" };
+  if (me.oauth2_login !== authority) return { error: `must_be_${authority}` };
+
+  if (authority === "google") {
+    // Facebook no permite revocar permisos desde el servidor
+    const flow = await getOAuth2Flow();
+    const status = flow?.accessToken
+      ? await revokeGooglePermissions(flow.accessToken).catch(() => "error")
+      : "400";
+    if (status === "400") {
+      // Token no reconocido por Google: cerrar sesión y avisar
+      await clearSession();
+      await clearOAuth2Flow();
+      return { error: "google_no_response_delete" };
+    }
+    if (status !== "200") return { error: "google_no_valid_reply" };
+  }
+
+  users.deleteUser(me.id!);
+  await clearSession();
+  await clearOAuth2Flow();
+  redirect("/login");
+}
+
+/** Ctrl_users::profile (rama OAuth2): solo preferencias, no nombre/email. */
+export async function editOauth2ProfileAction(
+  prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  const me = await currentUser();
+  if (!users.isLoggedIn(me) || !me.oauth2_login) return { error: "must_be_logged_in" };
+
+  me.family_name_first = formData.get("family_name_first") === "yes" || formData.get("family_name_first") === "on" ? 1 : 0;
+  me.preflang = clean(formData.get("preflang")) || "none";
+  me.prefvariant = clean(formData.get("prefvariant")) || "";
+  users.setUser(me);
+  await applyLoginSession(me);
+  redirect("/");
 }
 
 // ---- Ctrl_users::users / filter_users / edit_one_user / delete_user ----
