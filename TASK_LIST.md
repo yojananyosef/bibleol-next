@@ -129,6 +129,8 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
 - [ ] File manager + upload (Ctrl_file_manager, Ctrl_upload, valums) — route handlers multipart
 - [ ] pics (Ctrl_pic2db + bol_bible_refs.picture + resources.3bmoodle.dk)
 - [ ] SHEBANQ (Ctrl_shebanq), privacy, help, migrate (bol_migrations), maketypeinfo
+  - [x] `import_shebanq` (Ctrl_shebanq::import_shebanq): route handler `/shebanq` con guard teacher, fetch `shebanq.ancient-data.org/hebrew/query.json?id=` (timeout 20 s), mensajes `no_query_with_id`/`version_does_not_exist` i18n y `src/lib/services/shebanq.ts` (`decodeMql` 1:1 con preg_replace + replace-in-quotes → sentence_mql NORETRIEVE/sentence_unit/sentence_unit_mql, validación de comillas malformadas) — tests `tests/shebanq.test.ts` (5)
+  - [ ] `index()` (view shebanq del legacy), privacy, help, migrate, maketypeinfo
 - [ ] CKEditor → TipTap (edición de descripciones/notas)
 
 ## FASE 10 — Cierre y validación E2E
