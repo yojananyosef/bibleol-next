@@ -14,7 +14,8 @@
     "db:init": "node scripts/migrate-schema.ts",
     "i18n:import": "node scripts/import-lang.mjs",
     "corpus:download": "node scripts/download-corpus.ts",
-    "lexicons:build": "node scripts/build-lexicons.ts"
+    "lexicons:build": "node scripts/build-lexicons.ts",
+    "pic2db": "node scripts/pic2db.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
