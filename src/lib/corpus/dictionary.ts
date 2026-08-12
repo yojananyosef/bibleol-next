@@ -144,7 +144,7 @@ export class Dictionary {
         const allFeat = Dictionary.getAllFeaturesString(dbinfo, sdiIndex, subtype, subtypeAllFeat, indirect);
         if (sdiIndex === 0) {
           allFeat.push(dbinfo.surfaceFeature);
-          if (dbinfo.suffixFeature !== undefined) allFeat.push(dbinfo.suffixFeature);
+          if (dbinfo.suffixFeature) allFeat.push(dbinfo.suffixFeature);
         }
 
         if (subtype.value !== "") {

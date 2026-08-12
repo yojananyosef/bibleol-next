@@ -253,7 +253,7 @@ export function objectMonadSet(emd: EmdrosDb, otype: string, row: Record<string,
   if (ot.hasMonads && typeof row.monads === "string" && row.monads !== "") {
     return OlMonadSet.fromCompactString(row.monads);
   }
-  return new OlMonadSet([{ low: first, high: first }]);
+  return new OlMonadSet([{ low: first, high: Number(row.last_monad ?? first) }]);
 }
 
 /** Convierte un OlMonadSet a una lista de pares para cláusulas SQL. */

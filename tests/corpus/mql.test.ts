@@ -159,7 +159,7 @@ test("nestle1904: Jn 1:1 con book enum numérico (book=4)", skipNoNestle, () => 
   const mo = res.get_first_straw().get_first_matched_object();
   assert.equal(mo.get_id_d(), 140958);
   assert.equal(mo.get_monadset().low(), 49033);
-  assert.equal(mo.get_monadset().high2(), 49033);
+  assert.equal(mo.get_monadset().high2(), 49049);
   assert.equal(mo.get_feature("verse"), "1");
 });
 

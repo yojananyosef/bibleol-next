@@ -517,6 +517,12 @@ function fetchCandidates(emd: EmdrosDb, block: Block, opts: Options): Candidate[
     cols.push("last_monad", "monads");
     colSet.add("last_monad");
     colSet.add("monads");
+  } else if (ot.table !== "") {
+    const lastMonadCol = emd.db.pragma(`table_info(${ot.table})`) as unknown[];
+    if (lastMonadCol.some((c: unknown) => (c as { name?: string }).name === "last_monad")) {
+      cols.push("last_monad");
+      colSet.add("last_monad");
+    }
   }
 
   // Columnas de features: las de los predicados y GET del bloque. Sin GET,
