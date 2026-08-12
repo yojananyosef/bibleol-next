@@ -16,7 +16,8 @@
     "corpus:download": "node scripts/download-corpus.ts",
     "lexicons:build": "node scripts/build-lexicons.ts",
     "pic2db": "node scripts/pic2db.ts",
-    "maketypeinfo": "node scripts/maketypeinfo.ts"
+    "maketypeinfo": "node scripts/maketypeinfo.ts",
+    "migrate": "node scripts/migrate.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

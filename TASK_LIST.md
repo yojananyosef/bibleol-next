@@ -133,7 +133,7 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
   - [ ] `index()` (view shebanq del legacy)
 - [x] privacy (Ctrl_privacy: view_privacy con parsePolicyText) — página `/privacy` (título `privacy_policy_title` + HTML de `privacy_text` con el prefijo `(xx)` separado)
 - [x] help (Ctrl_help: usersguide/{lang}/{article}.php + view_help_navigator) — evaluador PHP→HTML de artículos en `src/lib/services/help.ts` (60 artículos evalúan para heb/gr/if/null), navegador con menú 1:1 en `helpNavigatorHtml`, `/help/[...parts]` con fallback a `en` y error_view — `data/usersguide/en/*.php` + `public/usersguide/en/images/`
-- [ ] migrate (bol_migrations: script CLI `bun run migrate`, CI Migration 1:1 con las 20 migraciones 001-020)
+- [x] migrate (bol_migrations: CI Migration 1:1 con las 20 migraciones 001-020 — `src/lib/db/migrations/` (runner con `bol_migrations`, 001-005, 006-010 con corrección de letras finales y roman, 011-020 GDPR/bootstrap4/language packs/exam mode/vulgate/latin2 conservado como no-op) + script CLI `bun run migrate` (Migration::current: aplica pendientes e imprime log) + `tests/migrations.test.ts` (8: orden/versiones, v19→v20, idempotencia, re-aplicación segura sobre esquema final, columnas, iconos 012, roman 009))
 - [x] maketypeinfo (Ctrl_maketypeinfo: script CLI `bun run maketypeinfo <db>`: `TypeInfo.fromMql` + `SELECT ENUMERATION CONSTANTS` con `ORDER BY ec.rowid` (fix 1:1 en `mql.ts`) — el archivo `data/meta/*.typeinfo.json` es copia histórica con features sintéticas añadidas a mano)
 - [ ] CKEditor → TipTap (edición de descripciones/notas)
 
