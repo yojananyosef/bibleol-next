@@ -8,7 +8,8 @@
 //    selección de frases deja de usarse también para unidades).
 //  - Save y Test Exercise: los diálogos de nombre de archivo y de
 //    sobrescritura (check_submit_quiz / submit_quiz / test_quiz).
-//  - En lugar de CKEditor se usa un <textarea> (el desc del ejercicio es HTML).
+//  - La descripción se edita con TipTap (sustituye CKEditor; el desc del
+//    ejercicio se guarda como HTML igual que en el legacy).
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -17,7 +18,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getConfiguration } from "@/legacy-ts/configuration";
 import { initConfiguration } from "@/legacy-ts/configuration";
@@ -30,6 +30,7 @@ import type { ShebanqImportResult } from "./mql-panel";
 import { FeaturesTab, type FeaturesTabHandle } from "./features-tab";
 import { UniverseTab } from "./universe-tab";
 import { TimerTab, type TimerTabHandle } from "./timer-tab";
+import { DescriptionEditor } from "./description-editor";
 
 /** Forma "legacy" del JSON del editor (la que consume la UI). */
 interface EditorDecoded {
@@ -275,12 +276,7 @@ export function QuizEditor({ data, teacher }: QuizEditorProps) {
 
         <TabsContent value="description" keepMounted className="p-2">
           <Label className="mb-1 block text-sm text-muted-foreground">{localize("description")}</Label>
-          <Textarea
-            className="min-h-[100px] w-full"
-            wrap="hard"
-            value={desc}
-            onChange={(e) => setDesc(e.target.value)}
-          />
+          <DescriptionEditor value={desc} onChange={setDesc} />
         </TabsContent>
 
         <TabsContent value="universe" keepMounted className="p-2">

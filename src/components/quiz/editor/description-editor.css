@@ -1,0 +1,36 @@
+/* description-editor.css — estilos del editor TipTap de descripciones. */
+
+.ol-desc-editor .tiptap {
+  min-height: 100px;
+  outline: none;
+}
+
+.ol-desc-editor .tiptap p {
+  margin: 0.25em 0;
+}
+
+.ol-desc-editor .tiptap ul,
+.ol-desc-editor .tiptap ol {
+  padding-left: 1.5rem;
+  list-style-position: outside;
+}
+
+.ol-desc-editor .tiptap ul {
+  list-style-type: disc;
+}
+
+.ol-desc-editor .tiptap ol {
+  list-style-type: decimal;
+}
+
+.ol-desc-editor .tiptap blockquote {
+  border-left: 3px solid hsl(var(--border));
+  padding-left: 0.75rem;
+  margin-left: 0;
+  color: hsl(var(--muted-foreground));
+}
+
+.ol-desc-editor .tiptap a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+}

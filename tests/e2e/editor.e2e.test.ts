@@ -1,7 +1,7 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { spawn, type ChildProcess } from "node:child_process";
-import { existsSync, unlinkSync } from "node:fs";
+import { existsSync, readFileSync, unlinkSync } from "node:fs";
 import path from "node:path";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
 import Database from "better-sqlite3";
@@ -149,6 +149,53 @@ test("profesor: crea, sobrescribe y testea un ejercicio", { timeout: 240_000 }, 
     await page.waitForURL(/\/quiz\/test\?quiz=/);
     await page.getByRole("button", { name: "Check answer" }).waitFor();
     await page.getByRole("button", { name: "GRADE task" }).waitFor();
+  } finally {
+    if (existsSync(filePath)) unlinkSync(filePath);
+    await ctx.close();
+  }
+});
+
+test("profesor: la descripción se edita con TipTap (bold → HTML en el .3et)", { timeout: 240_000 }, async () => {
+  const ctx: BrowserContext = await browser.newContext();
+  const page: Page = await ctx.newPage();
+  const name = newName();
+  const file = `${name}.3et`;
+  const filePath = path.join(QUIZZES_ROOT, QUIZ_DIR, file);
+
+  try {
+    await login(page, "teacher");
+    await openDemoDir(page);
+    await page.getByRole("link", { name: "New exercise" }).click();
+    await page.waitForURL(/\/quiz\/editor\?dir=/);
+    await editorReady(page);
+
+    // El tab Description es el activo por defecto: escribir el texto, seleccionar
+    // todo y aplicar negrita (TipTap emite <strong> para bold).
+    await page.locator(".ProseMirror").waitFor();
+    await page.locator(".ProseMirror").click();
+    await page.keyboard.type("bold desc plain");
+    await page.keyboard.press("ControlOrMeta+a");
+    await page.getByTitle("Bold").click();
+
+    await page.getByRole("tab", { name: "Passages" }).click();
+    await page.locator("ul li input[type='checkbox']:visible").first().check();
+    await page.getByRole("tab", { name: "Features" }).click();
+    const featureRows = page.locator("table tbody tr");
+    await featureRows.first().getByLabel("Show", { exact: true }).check();
+    await featureRows
+      .filter({ hasText: "Lexical stem" })
+      .first()
+      .getByLabel("Request", { exact: true })
+      .check();
+
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await page.getByText("Specify File Name").waitFor();
+    await page.getByLabel("Enter filename (without final “.3et”)").fill(name);
+    await page.getByRole("dialog").getByRole("button", { name: "Save", exact: true }).click();
+    await page.waitForURL(/\/quiz\?path=ETCBC4%2Fdemo/);
+
+    const xml = readFileSync(filePath, "utf8");
+    assert.match(xml, /<strong>bold desc plain<\/strong>/, "el .3et debe guardar el HTML de la descripción");
   } finally {
     if (existsSync(filePath)) unlinkSync(filePath);
     await ctx.close();
