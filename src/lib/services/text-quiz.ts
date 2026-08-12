@@ -436,6 +436,19 @@ export function saveQuiz(quizdata: QuizTemplate, quizFile: string): void {
 }
 
 /**
+ * Template::writeAsXml($quizdata) con un solo argumento (1:1 con el
+ * passage_insert de Ctrl_file_manager): escribe sin abrir el corpus.
+ */
+export function writeQuizAsXml(quizdata: QuizTemplate, quizFile: string): void {
+  const res = writeQuizTemplateXml(quizdata, null);
+  try {
+    writeFileSync(quizFile, res, "utf8");
+  } catch {
+    throw new QuizError("cannot_write_to_quiz_file");
+  }
+}
+
+/**
  * show_test_quiz(): como show_quiz pero sobre el fichero recién empaquetado
  * (Ctrl_text::test_quiz: package_test_quiz + set_owner + show_test_quiz).
  */

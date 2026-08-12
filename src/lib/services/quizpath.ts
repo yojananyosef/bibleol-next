@@ -4,20 +4,18 @@
  * filter_directories) sobre el filesystem `data/quizzes/`.
  */
 
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, renameSync, rmdirSync, statSync, unlinkSync, copyFileSync } from "node:fs";
 import path from "node:path";
 import { QUIZZES_DIR, getAppDb } from "../db/sqlite.ts";
 import { harvest } from "../quiz/template-parser.ts";
+import { decodeQuiz, resolveQuizFile, writeQuizAsXml } from "./text-quiz.ts";
+import type { QuizTemplate } from "../quiz/template-parser.ts";
 
 /** Error de quizpath (mensaje = clave de idioma). */
 export class QuizPathError extends Error {}
 
-/** `composedir` de varset_helper.php — compone dir + path (1:1). */
-export function composedir(dir: string, path_: string): string {
-  if (dir === "") return path_;
-  if (path_ === "") return dir;
-  return `${dir}/${path_}`;
-}
+import { composedir } from "../varset.ts";
+export { composedir } from "../varset.ts";
 
 /** Mod_userclass::get_classes_for_user — clases en las que está el usuario. */
 export function getClassesForUser(userid: number): number[] {
@@ -83,6 +81,89 @@ function isDirectory(p: string): boolean {
   }
 }
 
+function pathExists(p: string): boolean {
+  try {
+    statSync(p);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Mod_classdir::rmdir — elimina exercisedir/classexercise del directorio. */
+export function removeClassesForDir(dir: string): void {
+  const d = dir.replace(/\/+$/, "");
+  const db = getAppDb();
+  const row = db.prepare("SELECT id FROM bol_exercisedir WHERE pathname = ?").get(d) as { id: number } | undefined;
+  if (!row) return;
+  db.prepare("DELETE FROM bol_classexercise WHERE pathid = ?").run(row.id);
+  db.prepare("DELETE FROM bol_exercisedir WHERE id = ?").run(row.id);
+}
+
+/** Mod_classdir::update_classes_for_dir — clases visibles para un directorio. */
+export function updateClassesForDir(dir: string, oldClasses: number[], newClasses: number[]): void {
+  const d = dir.replace(/\/+$/, "");
+  const db = getAppDb();
+  const row = db.prepare("SELECT id FROM bol_exercisedir WHERE pathname = ?").get(d) as { id: number } | undefined;
+  let pathid: number;
+  if (!row) {
+    pathid = Number(db.prepare("INSERT INTO bol_exercisedir (pathname) VALUES (?)").run(d).lastInsertRowid);
+  } else {
+    pathid = row.id;
+  }
+
+  for (const newid of newClasses) {
+    if (oldClasses.includes(newid)) continue;
+    db.prepare("INSERT INTO bol_classexercise (pathid, classid) VALUES (?, ?)").run(pathid, newid);
+  }
+  for (const oldid of oldClasses) {
+    if (newClasses.includes(oldid)) continue;
+    db.prepare("DELETE FROM bol_classexercise WHERE pathid = ? AND classid = ?").run(pathid, oldid);
+  }
+}
+
+/**
+ * Mod_quizpath::fix_exerciseowner — sincroniza bol_exerciseowner con el
+ * filesystem: añade ownerid=0 para los .3et sin registro y borra los
+ * registros de ficheros que ya no existen.
+ */
+export function fixExerciseowner(): { added: string[]; deleted: string[] } {
+  const added: string[] = [];
+  const db = getAppDb();
+
+  const walk = (relDir: string): void => {
+    for (const nam of readdirSync(path.join(QUIZZES_DIR, relDir))) {
+      const full = path.join(QUIZZES_DIR, relDir, nam);
+      if (isDirectory(full)) {
+        walk(relDir === "" ? nam : `${relDir}/${nam}`);
+      } else if (endswithNocase(nam, ".3et")) {
+        const rel = relDir === "" ? nam : `${relDir}/${nam}`;
+        const exists = db
+          .prepare("SELECT COUNT(*) AS n FROM bol_exerciseowner WHERE pathname = ?")
+          .get(rel) as { n: number };
+        if (exists.n === 0) {
+          db.prepare("INSERT INTO bol_exerciseowner (pathname, ownerid) VALUES (?, 0)").run(rel);
+          added.push(rel);
+        }
+      }
+    }
+  };
+  walk("");
+
+  const deleted: string[] = [];
+  const rows = db.prepare("SELECT id, pathname FROM bol_exerciseowner").all() as {
+    id: number;
+    pathname: string;
+  }[];
+  for (const row of rows) {
+    if (!pathExists(path.join(QUIZZES_DIR, row.pathname))) {
+      db.prepare("DELETE FROM bol_exerciseowner WHERE id = ?").run(row.id);
+      deleted.push(row.pathname);
+    }
+  }
+  return { added, deleted };
+}
+
 function endswithNocase(haystack: string, needle: string): boolean {
   return haystack.toLowerCase().endsWith(needle.toLowerCase());
 }
@@ -95,6 +176,88 @@ export interface DirList {
   parentdir: string | null;
   relativedir: string;
 }
+
+/**
+ * Ctrl_file_manager::insert_files (núcleo 1:1) — completa la copia/movimiento
+ * pendiente: valida destinos y owners, copia, fija el owner y borra el
+ * origen si es move. La sesión files/operation/from_dir la gestiona la action.
+ */
+export function insertFiles(
+  qp: QuizPath,
+  src: QuizPath,
+  files: string[],
+  operation: "copy" | "move",
+  myid: number,
+  isadmin: boolean,
+): void {
+  const fileowner: Record<string, number> = {};
+  for (const f of files) {
+    if (qp.fileExistsAt(f))
+      throw new QuizPathError(
+        `Destination file '${f}' already exists. Delete or rename it. ` +
+          (operation === "copy"
+            ? "Then try to insert the copied files again."
+            : "Then try to insert the moved files again."),
+      );
+    if (operation === "move") {
+      const owner = src.getExerciseOwner(f);
+      fileowner[f] = owner;
+      if (owner !== myid && !isadmin)
+        throw new QuizPathError(
+          files.length === 1 ? "You do not own this file" : "You do not own all of the selected files",
+        );
+    }
+  }
+
+  for (const f of files) {
+    try {
+      copyFileSync(src.getAbsoluteFor(f), qp.getAbsoluteFor(f));
+    } catch {
+      throw new QuizPathError(`Cannot copy file '${f}'`);
+    }
+    qp.setOwner(operation === "move" ? fileowner[f] : myid, NaN, f);
+  }
+
+  if (operation === "move") src.deleteFiles(files, myid, isadmin);
+}
+
+/**
+ * Ctrl_file_manager::passage_insert (núcleo 1:1) — copia la selección de
+ * pasajes del origen a los ficheros marcados (misma BD y owner obligatorios).
+ */
+export function insertPassages(dir: string, files: string[], passageSource: string, myid: number): void {
+  let decodedSrc: QuizTemplate;
+  try {
+    decodedSrc = decodeQuiz(passageSource);
+  } catch {
+    throw new QuizPathError(`Cannot open file: ${passageSource}`);
+  }
+  const database = decodedSrc.database;
+  const selectedPaths = decodedSrc.selectedPaths;
+
+  for (const f of files) {
+    const dest = decodeQuiz(`${dir}/${f}`);
+    if (dest.database !== database)
+      throw new QuizPathError(
+        `The file '${f}' does not use the database '${database}'.\n` + "None of the files have been modified.",
+      );
+    const qp = createQuizPath(false);
+    qp.init(`${dir}/${f}`, false, false, []);
+    if (qp.getExerciseOwner() !== myid)
+      throw new QuizPathError("You do not own all of the selected files\nNone of the files have been modified.");
+  }
+
+  for (const f of files) {
+    const dest = decodeQuiz(`${dir}/${f}`);
+    dest.selectedPaths = selectedPaths;
+    try {
+      writeQuizAsXml(dest, resolveQuizFile(`${dir}/${f}`));
+    } catch {
+      throw new QuizPathError("Cannot write to quiz file");
+    }
+  }
+}
+
 
 export class QuizPath {
   private root: string;
@@ -140,6 +303,16 @@ export class QuizPath {
     } catch {
       return false;
     }
+  }
+
+  /** ¿Existe un fichero con el nombre relativo en el directorio actual? */
+  fileExistsAt(name: string): boolean {
+    return pathExists(path.join(this.canonicalAbsolute, name));
+  }
+
+  /** Path absoluto de un fichero relativo al directorio actual. */
+  getAbsoluteFor(name: string): string {
+    return path.join(this.canonicalAbsolute, name);
   }
 
   getAbsolute(): string {
@@ -258,6 +431,85 @@ export class QuizPath {
         Number.isNaN(tl) ? null : tl,
         pathname,
       );
+    }
+  }
+
+  /** Mod_quizpath::mkdir — crea el directorio bajo el path actual. */
+  mkdir(dir: string): void {
+    try {
+      mkdirSync(path.join(this.canonicalAbsolute, dir));
+    } catch {
+      throw new QuizPathError(`Cannot create folder '${dir}'`);
+    }
+  }
+
+  /** Mod_quizpath::rename — renombra (añade .3et) y actualiza exerciseowner. */
+  rename(oldname: string, newname: string): void {
+    const oldfull = `${oldname}.3et`;
+    const newfull = `${newname}.3et`;
+    if (this.pathExists(path.join(this.canonicalAbsolute, newfull)))
+      throw new QuizPathError(`'${newfull}' already exists`);
+    try {
+      renameSync(path.join(this.canonicalAbsolute, oldfull), path.join(this.canonicalAbsolute, newfull));
+    } catch {
+      throw new QuizPathError(`Cannot rename '${oldfull}' to '${newfull}'`);
+    }
+    getAppDb()
+      .prepare("UPDATE bol_exerciseowner SET pathname = ? WHERE pathname = ?")
+      .run(this.canonicalRelativeSlash + newfull, this.canonicalRelativeSlash + oldfull);
+  }
+
+  /** Mod_quizpath::rmdir — borra el directorio (solo vacío) y sus registros. */
+  rmdir(dir: string): void {
+    const relativedir = this.abs2rel(path.join(this.canonicalAbsolute, dir), true);
+    try {
+      rmdirSync(path.join(this.canonicalAbsolute, dir));
+    } catch {
+      throw new QuizPathError(`Cannot delete folder '${dir}'`);
+    }
+    removeClassesForDir(relativedir);
+  }
+
+  /** Mod_quizpath::check_delete_files — owner del usuario (o admin) en todos. */
+  checkDeleteFiles(files: string[], myId: number, isAdmin: boolean): void {
+    for (const f of files) {
+      const owner = this.getExerciseOwner(f);
+      if (owner !== myId && !isAdmin)
+        throw new QuizPathError(
+          files.length === 1 ? "You do not own this file" : "You do not own all of the selected files",
+        );
+    }
+  }
+
+  /** Mod_quizpath::delete_files — check_delete_files + borrado (fs y owner). */
+  deleteFiles(files: string[], myId: number, isAdmin: boolean): void {
+    this.checkDeleteFiles(files, myId, isAdmin);
+    const db = getAppDb();
+    for (const f of files) {
+      try {
+        unlinkSync(path.join(this.canonicalAbsolute, f));
+      } catch {
+        throw new QuizPathError(`Cannot delete file '${f}'`);
+      }
+      db.prepare("DELETE FROM bol_exerciseowner WHERE pathname = ?").run(this.canonicalRelativeSlash + f);
+    }
+  }
+
+  /** Mod_quizpath::chown_files — cambia el owner si el destino es teacher/admin. */
+  chownFiles(files: string[], userid: number): void {
+    const db = getAppDb();
+    const user = db
+      .prepare("SELECT id FROM bol_user WHERE id = ? AND (isteacher = 1 OR isadmin = 1)")
+      .get(userid);
+    if (!user) throw new QuizPathError("The new owner is not a facilitator");
+    for (const f of files) {
+      const pathname = this.canonicalRelativeSlash + f;
+      const exists = db
+        .prepare("SELECT COUNT(*) AS n FROM bol_exerciseowner WHERE pathname = ?")
+        .get(pathname) as { n: number };
+      if (exists.n === 0)
+        db.prepare("INSERT INTO bol_exerciseowner (pathname, ownerid) VALUES (?, ?)").run(pathname, userid);
+      else db.prepare("UPDATE bol_exerciseowner SET ownerid = ? WHERE pathname = ?").run(userid, pathname);
     }
   }
 
