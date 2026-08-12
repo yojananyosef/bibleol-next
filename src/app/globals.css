@@ -128,3 +128,25 @@
     @apply font-sans;
   }
 }
+.help-nav summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.25rem 0;
+}
+
+.help-nav p {
+  margin: 0.25rem 0;
+}
+
+.help-nav .level1 {
+  margin-left: 1.25rem;
+}
+
+.help-nav .level2 {
+  margin-left: 2.5rem;
+}
+
+.help-article img {
+  max-width: 100%;
+  height: auto;
+}

@@ -121,6 +121,7 @@ test("TypeInfo.fromMql coincide con el typeinfo.json almacenado (ETCBC4)", skipN
     assert.equal(ti.obj2feat.word.verb_class, stored.obj2feat.word.verb_class);
     assert.equal(ti.obj2feat.word.lex, "string");
     assert.equal(ti.obj2feat.word.self, "id_d");
+    assert.deepEqual(ti.enum2values.phrase_determination_t, ["NA", "det", "und"]);
   } finally {
     db.close();
   }

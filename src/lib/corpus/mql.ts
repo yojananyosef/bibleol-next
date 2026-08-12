@@ -781,7 +781,7 @@ function execCommand(emd: EmdrosDb, cmd: string, quick_harvest: boolean): TableO
     t.set_header(["Constant"]);
     const rows = emd.db
       .prepare(
-        "SELECT ec.enum_value_name FROM enumeration_constants ec JOIN enumerations e ON e.enum_id=ec.enum_id WHERE e.enum_name=? ORDER BY ec.value",
+        "SELECT ec.enum_value_name FROM enumeration_constants ec JOIN enumerations e ON e.enum_id=ec.enum_id WHERE e.enum_name=? ORDER BY ec.rowid",
       )
       .all(enumM[1]) as { enum_value_name: string }[];
     for (const r of rows) t.add_row([r.enum_value_name]);
