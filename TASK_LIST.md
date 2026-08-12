@@ -137,11 +137,11 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
 - [x] maketypeinfo (Ctrl_maketypeinfo: script CLI `bun run maketypeinfo <db>`: `TypeInfo.fromMql` + `SELECT ENUMERATION CONSTANTS` con `ORDER BY ec.rowid` (fix 1:1 en `mql.ts`) — el archivo `data/meta/*.typeinfo.json` es copia histórica con features sintéticas añadidas a mano)
 - [x] CKEditor → TipTap (edición de descripciones/notas): `@tiptap/*` v3 y `src/components/quiz/editor/description-editor.tsx` (sustituye CKEditor del quiz editor: toolbar undo/redo, bold/italic/underline/strike, listas, blockquote, align, links, clear, toggle "HTML source" = grupo 'mode'; el `desc` se guarda como HTML igual que el legacy) + `description-editor.css` — e2e `tests/e2e/editor.e2e.test.ts` (test 2: bold → `<strong>` en el `.3et`)
 
-## FASE 10 — Cierre y validación E2E
-- [ ] `bun run typecheck` 0 errores, lint, build, suite de tests completa
-- [ ] Paridad por módulo contra PHP original (mismos inputs → mismos datos en SQLite)
-- [ ] README.md de arquitectura + actualizar TASK_LIST con estado final
-- [ ] Paquete de corpus: documentar licencias (ETCBC4, Nestle 1904, JVulgate) y `bun run corpus:download`
+## FASE 10 — Cierre y validación E2E ✅
+- [x] `bun run typecheck` 0 errores, lint, build, suite de tests completa — validado: typecheck 0, lint limpio, build OK, **282/282 unit** + e2e Playwright en verde (editor 6/6 incl. TipTap; flakiness puntual bajo carga en test 1 del editor, pasa en re-run)
+- [x] Paridad por módulo contra PHP original (mismos inputs → mismos datos en SQLite) — cubierta y documentada en README §Paridad: tests por módulo (esquema/migraciones, corpus pasajes fijos, payload show_quiz, evaluación vs exercise_model, round-trip .3et, servicios) + e2e de flujos
+- [x] README.md de arquitectura + actualizar TASK_LIST con estado final — README con stack, comandos, mapa de directorios, decisiones técnicas, paridad, env vars y licencias
+- [x] Paquete de corpus: documentar licencias (ETCBC4, Nestle 1904, JVulgate) y `bun run corpus:download` — README §Licencias de datos: ETCBC4 CC BY-NC 4.0 (urn:nbn:nl:ui:13-048i-71), nestle1904 dominio público, jvulgate (Clementina 1592) dominio público
 
 ---
 
