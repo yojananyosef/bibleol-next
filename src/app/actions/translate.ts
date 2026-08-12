@@ -56,6 +56,23 @@ export async function updateGrammarAction(prev: TranslateResult | null, formData
   }
 }
 
+/** Ctrl_translate::update_lex — guarda las glosas del léxico. */
+export async function updateLexAction(prev: TranslateResult | null, formData: FormData): Promise<TranslateResult> {
+  try {
+    await translator();
+    const srcLang = clean(formData.get("src_lang"));
+    const langEdit = clean(formData.get("lang_edit"));
+    if (!srcLang || !langEdit) return { error: "Missing language identification" };
+    const post: Record<string, string> = {};
+    for (const [k, v] of formData.entries()) post[k] = typeof v === "string" ? v : "";
+    translate.updateGlosses(srcLang, langEdit, post, await variant());
+    revalidatePath("/translate/lexicon");
+    return { ok: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 /** Ctrl_translate::modify_localization — enable/disable iface/heblex/greeklex/… */
 export async function modifyLocalizationAction(formData: FormData): Promise<void> {
   await translator();

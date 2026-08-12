@@ -84,6 +84,11 @@ export default async function Home() {
                   {langLine(lang, "menu", "translate_interface")}
                 </Link>
               )}
+              {users.isTranslator(me) && (
+                <Link href="/translate/lexicon" className="text-primary underline-offset-4 hover:underline">
+                  {langLine(lang, "menu", "translate_lexicon")}
+                </Link>
+              )}
               <Link href="/grades" className="text-primary underline-offset-4 hover:underline">
                 {langLine(lang, "menu", "grades_my_quizzes")}
               </Link>

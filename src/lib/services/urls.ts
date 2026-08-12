@@ -32,7 +32,7 @@ export interface HebUrlRow {
 let lexDb: Database.Database | null = null;
 
 /** BD readonly con el espejo de lexicon_* (data/lexicons.db). */
-function getLexDb(): Database.Database {
+export function getLexDb(): Database.Database {
   if (!lexDb) lexDb = new Database(path.join(DATA_DIR, "lexicons.db"), { readonly: true });
   return lexDb;
 }

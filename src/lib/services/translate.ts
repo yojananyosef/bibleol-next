@@ -9,7 +9,11 @@ import { getAppDb } from "../db/sqlite.ts";
 import { META_DIR } from "../db/sqlite.ts";
 import { readFileSync, existsSync } from "node:fs";
 import path from "node:path";
+import Database from "better-sqlite3";
+import { DATA_DIR } from "../db/sqlite.ts";
 import { listTextgroups, loadLangComment, loadLangDictionary, listLangSrcLangs } from "../i18n/loader.ts";
+import { srcLangShort2long, getLexDb } from "./urls.ts";
+import { DbConfig } from "../corpus/db-config.ts";
 
 /** Nombres de tablas de idioma: bol_language_{abb}. */
 function qt(name: string): string {
@@ -444,3 +448,244 @@ export function addLanguage(abbrev: string, internal: string, native: string): v
 export function _unused(): string[] {
   return listLangSrcLangs();
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Léxico (Mod_translate::get_glosses / get_frequent_glosses / get_number_glosses
+//   / update_glosses / get_localized_*) — traducción de glosas.
+//   Fuente: data/lexicons.db (espejo de las tablas bol_lexicon_* del legacy,
+//   reutilizada por Mod_urls). Los edits se guardan en la misma BD (writable).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** min_tally del legacy: solo lexemas con tally mayor entran en los botones. */
+const MIN_TALLY = 5;
+
+export interface LexiconLine {
+  /** lex_id (clave de edición). */
+  lex_id: number;
+  /** tally. */
+  tally: number;
+  /** lex (heb/aram). */
+  lex: string;
+  /** vs (heb/aram) — índice del stem en verbal_stem_t. */
+  vs: string;
+  /** lexeme: hebreo vocalizado + roman (heb/aram), lemma (greek/latin). */
+  lexeme: string;
+  /** strongs (greek). */
+  strongs: number | null;
+  /** strongs_unreliable (greek). */
+  strongs_unreliable: number | null;
+  /** part_of_speech (latin). */
+  part_of_speech: string;
+  /** Primera aparición (enlace a show_text). */
+  firstbook: string;
+  firstchapter: number;
+  firstverse: number;
+  text_show: string | null;
+  text_edit: string | null;
+}
+
+const LEX_SRC = new Set(["heb", "aram", "greek", "latin"]);
+
+function lexLangClean(abb: string): string {
+  if (!/^[a-zA-Z][a-zA-Z-_]*$/.test(abb)) throw new Error(`Illegal language code: ${abb}`);
+  return abb;
+}
+
+/** get_all_lexicon_langs: abb → nombre nativo por src_lang (flags de bol_translation_languages). */
+export function getAllLexiconLangs(): Record<"heb" | "aram" | "greek" | "latin", Record<string, string>> {
+  const rows = getAppDb()
+    .prepare("SELECT abb, native, heblex_enabled, greeklex_enabled, latinlex_enabled FROM bol_translation_languages")
+    .all() as { abb: string; native: string; heblex_enabled: number; greeklex_enabled: number; latinlex_enabled: number }[];
+  const out: Record<"heb" | "aram" | "greek" | "latin", Record<string, string>> = {
+    heb: {}, aram: {}, greek: {}, latin: {},
+  };
+  for (const r of rows) {
+    if (r.heblex_enabled) { out.heb[r.abb] = r.native; out.aram[r.abb] = r.native; }
+    if (r.greeklex_enabled) out.greek[r.abb] = r.native;
+    if (r.latinlex_enabled) out.latin[r.abb] = r.native;
+  }
+  return out;
+}
+
+/** get_localized_ETCBC4: stems (verbal_stem_t) + books (universe.reference). */
+export function getLocalizedETCBC4(language: string): [{ [vs: string]: string }, { [book: string]: string }] {
+  const dbConfig = new DbConfig();
+  if (!dbConfig.initConfig("ETCBC4", "ETCBC4", language, false)) throw new Error("Missing DB configuration: ETCBC4");
+  const l10n = JSON.parse(dbConfig.l10n_json) as {
+    emdrostype?: { verbal_stem_t?: { [vs: string]: string } };
+    universe?: { reference?: { [book: string]: string } };
+  };
+  return [l10n.emdrostype?.verbal_stem_t ?? {}, l10n.universe?.reference ?? {}];
+}
+
+/** get_localized_nestle1904 / get_localized_jvulgate: sin stems, solo books. */
+export function getLocalizedNoStems(db: string, language: string): [{ [vs: string]: string }, { [book: string]: string }] {
+  const dbConfig = new DbConfig();
+  if (!dbConfig.initConfig(db, db, language, false)) throw new Error(`Missing DB configuration: ${db}`);
+  const l10n = JSON.parse(dbConfig.l10n_json) as { universe?: { reference?: { [book: string]: string } } };
+  return [{}, l10n.universe?.reference ?? {}];
+}
+
+/** get_number_glosses(src_lang): lexemas que entran en los botones de frecuencia. */
+export function getNumberGlosses(srcLang: string): number {
+  const db = getLexDb();
+  const long = srcLangShort2long(srcLang);
+  if (srcLang === "heb" || srcLang === "aram") {
+    return (db.prepare(`SELECT COUNT(DISTINCT lex) c FROM lexicon_${long} WHERE tally > ${MIN_TALLY}`).get() as { c: number }).c;
+  }
+  return (db.prepare(`SELECT COUNT(lemma) c FROM lexicon_${long} WHERE tally > ${MIN_TALLY}`).get() as { c: number }).c;
+}
+
+function mapLexiconRow(r: Record<string, unknown>): LexiconLine {
+  return {
+    lex_id: r.lex_id as number,
+    tally: r.tally as number,
+    lex: (r.lex as string) ?? "",
+    vs: (r.vs as string) ?? "",
+    lexeme: (r.lexeme as string) ?? "",
+    strongs: (r.strongs as number | null) ?? null,
+    strongs_unreliable: (r.strongs_unreliable as number | null) ?? null,
+    part_of_speech: (r.part_of_speech as string) ?? "",
+    firstbook: r.firstbook as string,
+    firstchapter: r.firstchapter as number,
+    firstverse: r.firstverse as number,
+    text_show: (r.text_show as string | null) ?? null,
+    text_edit: (r.text_edit as string | null) ?? null,
+  };
+}
+
+function lexTable(long: string, lang: string, variant: string | null): string {
+  return `lexicon_${long}_${lexLangClean(lang)}${variant ? `_${lexLangClean(variant)}` : ""}`;
+}
+
+const HEB_SELECT = `c.id lex_id, c.lex, c.vs, c.vocalized_lexeme_utf8 || ' ' || c.roman lexeme, c.firstbook, c.firstchapter, c.firstverse, s.gloss text_show, e.gloss text_edit, c.tally`;
+const GREEK_SELECT = `c.id lex_id, c.strongs, c.strongs_unreliable, c.lemma lexeme, c.firstbook, c.firstchapter, c.firstverse, s.gloss text_show, e.gloss text_edit, c.tally`;
+const LATIN_SELECT = `c.id lex_id, '' lex, '' vs, c.lemma lexeme, c.part_of_speech, c.firstbook, c.firstchapter, c.firstverse, s.gloss text_show, e.gloss text_edit, c.tally`;
+
+/** get_glosses: glosas en el rango de sortorder [from, to) del editor. */
+export function getGlossesForEdit(
+  srcLang: string,
+  langEdit: string,
+  langShow: string,
+  from: string,
+  to: string,
+  variant: string | null,
+): LexiconLine[] {
+  const db = getLexDb();
+  const long = srcLangShort2long(srcLang);
+  const te = lexTable(long, langEdit, variant);
+  const ts = lexTable(long, langShow, null);
+  let sql: string;
+  switch (srcLang) {
+    case "heb":
+    case "aram":
+      sql = `SELECT ${HEB_SELECT} FROM lexicon_${long} c
+             LEFT JOIN ${ts} s ON s.lex_id = c.id
+             LEFT JOIN ${te} e ON e.lex_id = c.id
+             WHERE c.sortorder >= ? AND c.sortorder < ?
+             ORDER BY c.sortorder, c.roman`;
+      break;
+    case "greek":
+      sql = `SELECT ${GREEK_SELECT} FROM lexicon_${long} c
+             LEFT JOIN ${ts} s ON s.lex_id = c.id
+             LEFT JOIN ${te} e ON e.lex_id = c.id
+             WHERE c.sortorder >= ? AND c.sortorder < ?
+             ORDER BY c.sortorder`;
+      break;
+    default:
+      sql = `SELECT ${LATIN_SELECT} FROM lexicon_${long} c
+             LEFT JOIN ${ts} s ON s.lex_id = c.id
+             LEFT JOIN ${te} e ON e.lex_id = c.id
+             WHERE c.sortorder >= ? AND c.sortorder < ?
+             ORDER BY c.sortorder, c.lemma, c.part_of_speech`;
+  }
+  return (db.prepare(sql).all(from, to) as Record<string, unknown>[]).map(mapLexiconRow);
+}
+
+/** get_frequent_glosses: las glosas más frecuentes (tally > MIN_TALLY). */
+export function getFrequentGlossesForEdit(
+  srcLang: string,
+  langEdit: string,
+  langShow: string,
+  glossStart: number,
+  glossCount: number,
+  variant: string | null,
+): LexiconLine[] {
+  const db = getLexDb();
+  const long = srcLangShort2long(srcLang);
+  const te = lexTable(long, langEdit, variant);
+  const ts = lexTable(long, langShow, null);
+  if (srcLang === "heb" || srcLang === "aram") {
+    const lexRows = db
+      .prepare(`SELECT DISTINCT lex FROM lexicon_${long} WHERE tally > ${MIN_TALLY} ORDER BY tally DESC, sortorder ASC LIMIT ? OFFSET ?`)
+      .all(glossCount, glossStart) as { lex: string }[];
+    if (lexRows.length === 0) return [];
+    const relevant = lexRows.map((r) => `'${r.lex.replace(/'/g, "''")}'`).join(",");
+    return (
+      db
+        .prepare(`SELECT ${HEB_SELECT} FROM lexicon_${long} c
+                  LEFT JOIN ${ts} s ON s.lex_id = c.id
+                  LEFT JOIN ${te} e ON e.lex_id = c.id
+                  WHERE c.lex IN (${relevant})
+                  ORDER BY c.tally DESC, c.sortorder`)
+        .all() as Record<string, unknown>[]
+    ).map(mapLexiconRow);
+  }
+  const sql =
+    srcLang === "greek"
+      ? `SELECT ${GREEK_SELECT} FROM lexicon_${long} c
+         LEFT JOIN ${ts} s ON s.lex_id = c.id
+         LEFT JOIN ${te} e ON e.lex_id = c.id
+         WHERE c.tally > ${MIN_TALLY}
+         ORDER BY c.tally DESC, c.sortorder LIMIT ? OFFSET ?`
+      : `SELECT ${LATIN_SELECT} FROM lexicon_${long} c
+         LEFT JOIN ${ts} s ON s.lex_id = c.id
+         LEFT JOIN ${te} e ON e.lex_id = c.id
+         WHERE c.tally > ${MIN_TALLY}
+         ORDER BY c.tally DESC, c.sortorder LIMIT ? OFFSET ?`;
+  return (db.prepare(sql).all(glossCount, glossStart) as Record<string, unknown>[]).map(mapLexiconRow);
+}
+
+/** Necesita una conexión WRITABLE a data/lexicons.db (edición de glosas). */
+function getLexDbWritable(): Database.Database {
+  return new Database(path.join(DATA_DIR, "lexicons.db"));
+}
+
+/** update_glosses: guarda las glosas modificadas (claves modif-<lex_id> del POST). */
+export function updateGlosses(srcLang: string, dstLang: string, post: Record<string, string>, variant: string | null): void {
+  if (!LEX_SRC.has(srcLang)) throw new Error("illegal_lang_code");
+  const long = srcLangShort2long(srcLang);
+  const table = `lexicon_${long}_${lexLangClean(dstLang)}`;
+  const table2 = variant ? `${table}_${lexLangClean(variant)}` : table;
+  const db = getLexDbWritable();
+  for (const t of new Set([table, table2])) {
+    db.exec(`CREATE TABLE IF NOT EXISTS ${t} (lex_id INTEGER, gloss TEXT)`);
+  }
+  const getBase = variant ? db.prepare(`SELECT gloss FROM ${table} WHERE lex_id = ?`) : null;
+  const del = db.prepare(`DELETE FROM ${table2} WHERE lex_id = ?`);
+  const countExists = db.prepare(`SELECT COUNT(*) n FROM ${table2} WHERE lex_id = ?`);
+  const ins = db.prepare(`INSERT INTO ${table2} (lex_id, gloss) VALUES (?, ?)`);
+  const upd = db.prepare(`UPDATE ${table2} SET gloss = ? WHERE lex_id = ?`);
+  db.transaction(() => {
+    for (const [key, modif] of Object.entries(post)) {
+      if (!key.startsWith("modif-") || modif !== "true") continue;
+      const key2 = key.slice(6);
+      const raw = post[key2] ?? "";
+      const text = raw.trim();
+      let deleted = false;
+      if (variant && getBase) {
+        const row = getBase.get(Number(key2)) as { gloss: string } | undefined;
+        if (!text || (row && row.gloss === text)) {
+          del.run(Number(key2));
+          deleted = true;
+        }
+      }
+      if (!deleted) {
+        if ((countExists.get(Number(key2)) as { n: number }).n === 0) ins.run(Number(key2), raw);
+        else upd.run(raw, Number(key2));
+      }
+    }
+  })();
+  db.close();
+}
+

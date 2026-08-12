@@ -30,7 +30,7 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
 - [x] Tests de integración (`tests/db.test.ts`, 6/6): esquema completo, seeds bolsetup (lexicons 10085/5433/4581/800/76, alfabetos, fuentes, idiomas, migrations v19), hash md5 PHP, FKs cascade, idempotencia
 
 ## FASE 2 — Auth y usuarios (Ctrl_login, Ctrl_users, Mod_users) ✅
-- [x] `src/lib/auth/password.ts`: `md5(pw_salt + pw)` idéntico al PHP + `generate_pw` (juego de caracteres sin I/l/1/O/0) + claves hex 32
+- [x] `src/lib/auth/password.ts`: `md5(pw_salt + pw)` idéntico al PHP + `generate_pw` (juego de caracteres sin I/l/1/O/0) + claves hex 32 — además `hashPasswordScrypt`/`verifyPassword`/`isScryptHash` (scrypt autodescriptivo) con lazy rehash en `verifyLogin` y `setUser` escribe scrypt para contraseñas nuevas
 - [x] `src/lib/auth/session.ts`: cookie httpOnly firmada con jose (HS256) con userId/language/variant — reemplaza sesión CI (`ol_user`, `language`, `variant`)
 - [x] `src/lib/services/users.ts` (← Mod_users, 550 líneas 1:1): verify_login, roles (admin/teacher/translator), is_logged_in(_noaccept), CRUD set_user/delete_user (font + exerciseowner→0), reset keys (48h), acceptance code (15 min), política (CURRENT_POLICY_DATE 1512390210), OAuth2 (ggl_/fcb_), expiración (48h/9m/17m/18m), generate_administrator/student
 - [x] `src/lib/auth/guards.ts`: check_logged_in / check_teacher / check_admin / check_translator / check_logged_in_local (DataException + redirect /login)
@@ -113,7 +113,7 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
 - [x] Rutas traductor: `/translate` (→ if), `/translate/if` (paginación, sorting, selects grupo/lang, editor con revert/modif-indicator), `/translate/grammar` (db + name_prefix), `/translate/list` (progreso, enable/disable, add language) + server actions `src/app/actions/translate.ts` (guards translator) + tests `tests/i18n/*` (12)
 - [x] `src/lib/i18n/` diccionario de UI + l10n para clientes: `l10n.ts` (t/getL10nJson/getL10nObject); idioma de sesión vía `sessionLanguage()` + selector `LangSelect` (Ctrl_lang: `/lang?lang=xx` y `/lang/variant?variant=xx` como route handlers por cookies) — hito parcial (léxico en fase posterior)
 - [x] l10n aplicada a páginas principales: `src/app/page.tsx` (header con menu_lang + welcome/welcome2/intro_center, enlace traductor) + `src/app/login` + `src/app/sign-up` + `src/app/profile` (server wrapper pasa claves traducidas a los client components con `langLine(lang, group, key)`) — e2e `tests/e2e/translate.e2e.test.ts` (3: l10n home+login, editar cadena en /translate/if, grammar ETCBC4)
-- [ ] i18n léxico (translate_lex / edit_lex / update_lex + bol_lexicon_* + view_translate case 'lexicon') — diferido
+- [x] i18n léxico (translate_lex / edit_lex / update_lex + bol_lexicon_* + view_translate case 'lexicon') — `src/lib/services/translate.ts` (getAllLexiconLangs con flags heblex/greeklex/latinlex, getNumberGlosses con min_tally=5, getGlossesForEdit/getFrequentGlossesForEdit con joins lang_show/lang_edit+variant sobre data/lexicons.db, updateGlosses con variantes igual-base→borrar, getLocalizedETCBC4/NoStems desde db_config) + `urls-buttons-long.ts` (191+16+91+92 botones extraídos 1:1 de Mod_urls.php) + `src/components/translate/lex-editor.tsx` (port view_translate case 'lexicon': tally/lex/lexeme agrupados por lexema, stems stripSortIndex, enlace primera aparición, revert/modif) + gloss-selector parametrizado (editorHref) + rutas `/translate/lexicon` y `/translate/edit-lex` + `updateLexAction` + menú translate_lexicon — tests `tests/translate-lex.test.ts` (10) + e2e `tests/e2e/translate-lex.e2e.test.ts` (2)
 - [x] URLs y refs bíblicas — Ctrl_urls + Mod_urls + view_select_gloss + view_edit_url + bol_heb_urls (`bol_bible_refs`/`bol_bible_urls` en esquema; UI de pics en fase posterior)
   - [x] `src/lib/services/urls.ts` (← Mod_urls): get_glosses/get_frequent_glosses (lexicons.db, 1 lexema/fila), get_heb_urls (bol_heb_urls), create/set/delete_heb_url, src_lang_short2long, get_heb/aram_buttons (26+2, rango sortorder) + `src/lib/services/icons.ts` (L_icon::css_class + ICON_NAMES en módulo client-safe)
   - [x] `src/components/urls/gloss-selector.tsx` (← view_select_gloss: GlossBlock/GlossSelectorAll, botones frecuencia + alfabético, hrefs `urlEditorHref` con src_lang/buttonix) + `urls.css` (port de .gloss-wrapper/.gloss-wrapitem/.btn-gloss-selector de ol.css)
@@ -142,7 +142,7 @@ Monolito modular: Next.js 16 (App Router) + TypeScript strict + Tailwind v4 + sh
 ## Decisiones técnicas fijadas (aprobadas)
 | Decisión | Resolución |
 |---|---|
-| Contraseñas | `md5(pw_salt + pw)` idéntico al PHP (compatibilidad BD) |
+| Contraseñas | `md5(pw_salt + pw)` idéntico al PHP (compatibilidad BD) + **lazy rehash**: contraseñas nuevas y post-login se guardan como `scrypt$N$r$p$salt$hash` (node:crypto, autodescriptivo); `verifyPassword` acepta ambos, y `verifyLogin` migra md5→scrypt en el acto sin tocar el resto de `bol_user` (verificado en `tests/auth.test.ts`) |
 | Sesiones | Cookies firmadas jose/httpOnly (reemplaza sesión CI) |
 | Corpus | Port MQL→SQL directo sobre bases Emdros SQLite (sin binarios nativos) |
 | i18n | Cargador propio sobre langsrc + bol_language_en + property_files |
