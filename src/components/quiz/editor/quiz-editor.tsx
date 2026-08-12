@@ -26,6 +26,7 @@ import type { QuizEditorDataPayload } from "@/lib/services/quizeditor";
 import type { EditorMqlData, EditorQuizFeatures } from "@/lib/quiz/editor-logic";
 import { checkQuizNameAction, submitQuizAction, testQuizAction } from "@/app/actions/quizeditor";
 import { MqlSelectorPanel, type MqlSelectorPanelHandle } from "./mql-panel";
+import type { ShebanqImportResult } from "./mql-panel";
 import { FeaturesTab, type FeaturesTabHandle } from "./features-tab";
 import { UniverseTab } from "./universe-tab";
 import { TimerTab, type TimerTabHandle } from "./timer-tab";
@@ -88,6 +89,15 @@ export function QuizEditor({ data, teacher }: QuizEditorProps) {
   const qoselRef = useRef<MqlSelectorPanelHandle>(null);
   const featuresRef = useRef<FeaturesTabHandle>(null);
   const timerRef = useRef<TimerTabHandle>(null);
+
+  // shebanq_to_qo: confirmación de usar el FOCUS como selección de unidades
+  const [shebanqUnit, setShebanqUnit] = useState<{ otype: string; mql: string } | null>(null);
+
+  function onShebanqImport(r: ShebanqImportResult): void {
+    if (r.sentence_unit && r.sentence_unit_mql) {
+      setShebanqUnit({ otype: r.sentence_unit, mql: r.sentence_unit_mql });
+    }
+  }
 
   // Question object: el tipo de objeto del tab Features
   const qbOtype = useForQo ? senselOtype : qoselOtype;
@@ -302,6 +312,7 @@ export function QuizEditor({ data, teacher }: QuizEditorProps) {
             onOtypeChanged={setSenselOtype}
             onChanged={() => undefined}
             onMqlModeChange={() => undefined}
+            onShebanqImport={onShebanqImport}
           />
         </TabsContent>
 
@@ -414,6 +425,46 @@ export function QuizEditor({ data, teacher }: QuizEditorProps) {
               onClick={() => {
                 setShowOverwrite(false);
                 void doSubmit(pendingActionRef.current, quizNameRef.current);
+              }}
+            >
+              {localize("yes")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm sentence unit MQL dialog (shebanq_to_qo) */}
+      <Dialog open={shebanqUnit !== null} onOpenChange={(o) => !o && setShebanqUnit(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{localize("import_from_shebanq")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 text-sm">
+            <p>{localize("sentence_selection_imported")}</p>
+            {shebanqUnit ? (
+              <p
+                dangerouslySetInnerHTML={{
+                  __html: localize("use_qo_selection").replace(
+                    "{0}",
+                    `<code>[${shebanqUnit.otype} ${shebanqUnit.mql.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}]</code>`,
+                  ),
+                }}
+              />
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShebanqUnit(null)}
+            >
+              {localize("no")}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                if (shebanqUnit) qoselRef.current?.importFromShebanq(shebanqUnit.otype, shebanqUnit.mql);
+                setShebanqUnit(null);
               }}
             >
               {localize("yes")}

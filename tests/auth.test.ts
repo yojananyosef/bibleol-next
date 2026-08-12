@@ -11,14 +11,18 @@ process.env.BIBLEOL_DATA_DIR = TMP;
 let db: Database.Database;
 let users: typeof import("../src/lib/services/users.ts");
 let hashPassword: (pw: string) => string;
+let isScryptHash: (s: string) => boolean;
+let verifyPassword: (pw: string, stored: string) => boolean;
 
 const now = () => Math.floor(Date.now() / 1000);
 
 before(async () => {
   const { getAppDb } = await import("../src/lib/db/sqlite.ts");
   db = getAppDb();
-  const { hashPassword: hp } = await import("../src/lib/auth/password.ts");
-  hashPassword = hp;
+  const hp = await import("../src/lib/auth/password.ts");
+  hashPassword = hp.hashPassword;
+  isScryptHash = hp.isScryptHash;
+  verifyPassword = hp.verifyPassword;
   users = await import("../src/lib/services/users.ts");
 });
 
@@ -39,24 +43,52 @@ function seedUser(overrides: Record<string, unknown> = {}): number {
   return u.id!;
 }
 
-test("verifyLogin: ok con md5(salt+pw), falla con pw incorrecta", () => {
+test("verifyLogin: ok con scrypt (nuevas), falla con pw incorrecta", () => {
   const id = seedUser();
-  const ok = users.verifyLogin((db.prepare("SELECT username FROM bol_user WHERE id=?").get(id) as { username: string }).username, "secret");
+  const username = (db.prepare("SELECT username FROM bol_user WHERE id=?").get(id) as { username: string }).username;
+  const ok = users.verifyLogin(username, "secret");
   assert.ok(ok);
   assert.equal(ok.id, id);
   assert.equal(users.verifyLogin("no-such-user", "x"), null);
-  assert.equal(users.verifyLogin((db.prepare("SELECT username FROM bol_user WHERE id=?").get(id) as { username: string }).username, "wrong"), null);
+  assert.equal(users.verifyLogin(username, "wrong"), null);
 });
 
-test("setUser: hash idéntico al PHP y update con pw nuevo", () => {
+test("verifyLogin: md5 legacy se migra a scrypt en el acto (lazy rehash)", () => {
+  const u = users.newUser();
+  u.first_name = "L"; u.last_name = "M"; u.username = "legacy1"; u.email = "l@m.tt";
+  u.password = hashPassword("oldpass");
+  users.setUser(u);
+  const row = db.prepare("SELECT password FROM bol_user WHERE id=?").get(u.id) as { password: string };
+  assert.equal(isScryptHash(row.password), false);
+
+  assert.ok(users.verifyLogin("legacy1", "oldpass"));
+  const after = db.prepare("SELECT password FROM bol_user WHERE id=?").get(u.id) as { password: string };
+  assert.equal(isScryptHash(after.password), true);
+  assert.equal(verifyPassword("oldpass", after.password), true);
+  assert.equal(verifyPassword("wrong", after.password), false);
+  assert.ok(users.verifyLogin("legacy1", "oldpass"));
+});
+
+test("setUser: escribe scrypt para contraseñas nuevas", () => {
   const u = users.newUser();
   u.first_name = "A"; u.last_name = "B"; u.username = "hashi"; u.email = "h@t.tt";
   users.setUser(u, "abcde");
   const row = db.prepare("SELECT password FROM bol_user WHERE id=?").get(u.id) as { password: string };
-  assert.equal(row.password, hashPassword("abcde"));
+  assert.equal(isScryptHash(row.password), true);
+  assert.equal(verifyPassword("abcde", row.password), true);
   users.setUser(u, "fghij");
   const row2 = db.prepare("SELECT password FROM bol_user WHERE id=?").get(u.id) as { password: string };
-  assert.equal(row2.password, hashPassword("fghij"));
+  assert.equal(isScryptHash(row2.password), true);
+  assert.equal(verifyPassword("fghij", row2.password), true);
+  assert.equal(verifyPassword("abcde", row2.password), false);
+});
+
+test("verifyPassword: md5 legacy sigue válido hasta la migración", () => {
+  const md5 = hashPassword("legit");
+  assert.equal(verifyPassword("legit", md5), true);
+  assert.equal(verifyPassword("wrong", md5), false);
+  assert.equal(verifyPassword("x", ""), false);
+  assert.equal(verifyPassword("x", "NONE"), false);
 });
 
 test("getUserById(-1) crea usuario nuevo con last_login ficticio", () => {

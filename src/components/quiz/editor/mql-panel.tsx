@@ -12,6 +12,8 @@ import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from "reac
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   getConfiguration,
   getFeatureSetting,
@@ -48,6 +50,14 @@ export interface MqlSelectorPanelHandle {
   getInfo(): EditorMqlData;
   /** isDirty(): el MQL generado difiere del inicial. */
   isDirty(): boolean;
+  /** setOtype + setUsemql + setMql del legacy (importación desde SHEBANQ). */
+  importFromShebanq(otype: string, mql: string): void;
+}
+
+/** Resultado de la importación SHEBANQ aplicable al selector de unidades. */
+export interface ShebanqImportResult {
+  sentence_unit: string | null;
+  sentence_unit_mql: string | null;
 }
 
 export interface MqlSelectorPanelProps {
@@ -61,6 +71,8 @@ export interface MqlSelectorPanelProps {
   onChanged: () => void;
   /** Cambio de MQL ↔ friendly (el sensel habilita el tab de unidades). */
   onMqlModeChange: (useMql: boolean) => void;
+  /** Solo sensel: la importación SHEBANQ devolvió una unidad de frase. */
+  onShebanqImport?: (r: ShebanqImportResult) => void;
 }
 
 interface PanelState {
@@ -134,7 +146,7 @@ function makeMql(otype: string, handlers: Record<string, EditorFeatureHandler>, 
 
 export const MqlSelectorPanel = forwardRef<MqlSelectorPanelHandle, MqlSelectorPanelProps>(
   function MqlSelectorPanel(
-    { prefix, initialMd, allowUseForQo, onUseForQoChange, onOtypeChanged, onChanged, onMqlModeChange },
+    { prefix, initialMd, allowUseForQo, onUseForQoChange, onOtypeChanged, onChanged, onMqlModeChange, onShebanqImport },
     ref,
   ) {
     const cfg = getConfiguration();
@@ -189,6 +201,71 @@ export const MqlSelectorPanel = forwardRef<MqlSelectorPanelHandle, MqlSelectorPa
     );
     const initialMqlText = useRef(init.initialMqlText);
 
+    // Diálogo "Import from SHEBANQ" (import_from_shebanq del legacy)
+    const [shebanqOpen, setShebanqOpen] = useState(false);
+    const [shebanqQid, setShebanqQid] = useState("");
+    const [shebanqDbvers, setShebanqDbvers] = useState("4b");
+    const [shebanqError, setShebanqError] = useState("");
+    const [shebanqBusy, setShebanqBusy] = useState(false);
+
+    async function doShebanqImport(): Promise<void> {
+      setShebanqBusy(true);
+      setShebanqError("");
+      try {
+        const res = await fetch(
+          `/shebanq?id=${encodeURIComponent(shebanqQid.trim())}&version=${encodeURIComponent(shebanqDbvers.trim())}`,
+        );
+        const result = (await res.json()) as {
+          error: string | null;
+          sentence_mql: string | null;
+          sentence_unit: string | null;
+          sentence_unit_mql: string | null;
+        };
+        if (result.error !== null) {
+          setShebanqError(result.error);
+        } else {
+          // panelSent.setMql(sentence_mql): solo el textarea del selector de frases
+          if (result.sentence_mql !== null) {
+            setState((prev) => ({ ...prev, mqlText: result.sentence_mql! }));
+          }
+          setShebanqOpen(false);
+          onShebanqImport?.({ sentence_unit: result.sentence_unit, sentence_unit_mql: result.sentence_unit_mql });
+        }
+      } catch (err) {
+        setShebanqError(`${localize("error_response")} ${String(err)}`);
+      } finally {
+        setShebanqBusy(false);
+      }
+    }
+
+    // --------------------------------------------------------------- helpers
+
+    const hand = (name: string): EditorFeatureHandler => state.handlers[name];
+
+    function initFname2fh(): Record<string, WireFeatureHandler> {
+      const map: Record<string, WireFeatureHandler> = {};
+      if (initialMd?.featHand?.vhand) {
+        for (const vh of initialMd.featHand.vhand) {
+          const w = vh as unknown as WireFeatureHandler;
+          map[w.name] = w;
+        }
+      }
+      return map;
+    }
+
+    const rebuild = (otype: string, useInitial: boolean) => {
+      const initialRaw = useInitial ? initFname2fh() : {};
+      const built = makeHandlers(otype, initialRaw);
+      setState((prev) => ({
+        ...prev,
+        otype,
+        handlers: built.handlers,
+        featureList: built.featureList,
+        currentFeature: built.defaultFeature,
+        mqlText: makeMql(otype, built.handlers, prefix),
+      }));
+    };
+
     // getInfo()/isDirty() imperativos (save/test del orquestador)
     useImperativeHandle(ref, () => ({
       getInfo(): EditorMqlData {
@@ -205,35 +282,13 @@ export const MqlSelectorPanel = forwardRef<MqlSelectorPanelHandle, MqlSelectorPa
       isDirty(): boolean {
         return state.mqlText !== initialMqlText.current;
       },
+      importFromShebanq(otype: string, mql: string): void {
+        // setOtype().change() + setUsemql() + setMql() del legacy
+        rebuild(otype, false);
+        setState((prev) => ({ ...prev, useMql: true, mqlText: mql }));
+        onMqlModeChange(true);
+      },
     }));
-
-    // --------------------------------------------------------------- helpers
-
-    const hand = (name: string): EditorFeatureHandler => state.handlers[name];
-
-    const rebuild = (otype: string, useInitial: boolean) => {
-      const initialRaw = useInitial ? initFname2fh() : {};
-      const built = makeHandlers(otype, initialRaw);
-      setState((prev) => ({
-        ...prev,
-        otype,
-        handlers: built.handlers,
-        featureList: built.featureList,
-        currentFeature: built.defaultFeature,
-        mqlText: makeMql(otype, built.handlers, prefix),
-      }));
-    };
-
-    function initFname2fh(): Record<string, WireFeatureHandler> {
-      const map: Record<string, WireFeatureHandler> = {};
-      if (initialMd?.featHand?.vhand) {
-        for (const vh of initialMd.featHand.vhand) {
-          const w = vh as unknown as WireFeatureHandler;
-          map[w.name] = w;
-        }
-      }
-      return map;
-    }
 
     // switchToMql(): para sensel, deselecciona useForQo (el tab de unidades
     // queda entonces habilitado) — 1:1 con PanelTemplSentenceSelector.
@@ -255,21 +310,27 @@ export const MqlSelectorPanel = forwardRef<MqlSelectorPanelHandle, MqlSelectorPa
     // ------------------------------------------------------------- rendering
 
     return (
-      <div className="space-y-3 text-sm">
+      <>
+        <div className="space-y-3 text-sm">
         {allowUseForQo ? (
-          <Label className="flex items-center gap-2 font-normal">
-            <Checkbox
-              checked={useForQoState}
-              disabled={state.useMql}
-              onCheckedChange={(v) => {
-                const nv = v === true;
-                setUseForQoState(nv);
-                onUseForQoChange(nv);
-                onChanged();
-              }}
-            />
-            {localize("use_for_qosel")}
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label className="flex items-center gap-2 font-normal">
+              <Checkbox
+                checked={useForQoState}
+                disabled={state.useMql}
+                onCheckedChange={(v) => {
+                  const nv = v === true;
+                  setUseForQoState(nv);
+                  onUseForQoChange(nv);
+                  onChanged();
+                }}
+              />
+              {localize("use_for_qosel")}
+            </Label>
+            <Button type="button" variant="outline" size="sm" onClick={() => setShebanqOpen(true)}>
+              {localize("import_shebanq")}
+            </Button>
+          </div>
         ) : null}
 
         <div className="grid grid-cols-1 gap-2">
@@ -372,6 +433,59 @@ export const MqlSelectorPanel = forwardRef<MqlSelectorPanelHandle, MqlSelectorPa
           </div>
         </div>
       </div>
+
+      {/* Import from SHEBANQ dialog (view_edit_quiz.php #import-shebanq-dialog) */}
+      {allowUseForQo ? (
+        <Dialog open={shebanqOpen} onOpenChange={(o) => !o && setShebanqOpen(false)}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>{localize("import_from_shebanq")}</DialogTitle>
+            </DialogHeader>
+            {shebanqError ? (
+              <p className="rounded border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {shebanqError}
+              </p>
+            ) : null}
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor={`${prefix}-shebanq-qid`} className="mb-1 block text-sm">
+                  {localize("shebanq_query_id_prompt")}
+                </Label>
+                <Input
+                  id={`${prefix}-shebanq-qid`}
+                  value={shebanqQid}
+                  onChange={(e) => setShebanqQid(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void doShebanqImport();
+                  }}
+                />
+              </div>
+              <div>
+                <Label htmlFor={`${prefix}-shebanq-dbvers`} className="mb-1 block text-sm">
+                  {localize("shebanq_query_id_prompt")}
+                </Label>
+                <Input
+                  id={`${prefix}-shebanq-dbvers`}
+                  value={shebanqDbvers}
+                  onChange={(e) => setShebanqDbvers(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void doShebanqImport();
+                  }}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShebanqOpen(false)}>
+                {localize("cancel_button")}
+              </Button>
+              <Button type="button" onClick={() => void doShebanqImport()} disabled={shebanqBusy}>
+                {localize("import_button")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : null}
+      </>
     );
   },
 );

@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { getAppDb } from "../db/sqlite.ts";
 import { DataException } from "../errors.ts";
-import { hashPassword } from "../auth/password.ts";
+import { hashPasswordScrypt, isScryptHash, verifyPassword } from "../auth/password.ts";
 
 /**
  * Port 1:1 de Mod_users.php (550 líneas).
@@ -96,10 +96,19 @@ export function getUserById(userid: number): UserRow | NewUserRow {
   return rowToUser(row);
 }
 
-/** True si login correcto (username + md5(salt+pw)); null/false si no. */
+/** True si login correcto (scrypt o md5(salt+pw) legacy); null/false si no.
+ * Si el hash almacenado es md5 legacy y la contraseña coincide, la re-hashea
+ * en el acto a scrypt (lazy migration) sin tocar el resto de bol_user. */
 export function verifyLogin(name: string, pw: string): UserRow | null {
-  const row = getAppDb().prepare(`${SELECT_USER} WHERE username=? AND password=?`).get(name, hashPassword(pw)) as UserRow | undefined;
+  const row = getAppDb().prepare(`${SELECT_USER} WHERE username=?`).get(name) as UserRow | undefined;
   if (!row) return null;
+  if (!verifyPassword(pw, row.password)) return null;
+  if (!isScryptHash(row.password)) {
+    getAppDb()
+      .prepare("UPDATE bol_user SET password=? WHERE id=?")
+      .run(hashPasswordScrypt(pw), row.id);
+    row.password = hashPasswordScrypt(pw);
+  }
   return rowToUser(row);
 }
 
@@ -246,7 +255,7 @@ export function setUser(u: UserRow, pw?: string): void {
     first_name: u.first_name ?? "",
     last_name: u.last_name ?? "",
     username: u.username ?? "",
-    password: pw ? hashPassword(pw) : u.password,
+    password: pw ? hashPasswordScrypt(pw) : u.password,
     reset: u.reset ?? null,
     reset_time: u.reset_time ?? 0,
     isadmin: u.isadmin ? 1 : 0,
