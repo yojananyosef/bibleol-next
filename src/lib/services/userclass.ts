@@ -216,7 +216,7 @@ export function classesForUser(
   return {
     userInfo: makeUserById(userid),
     allClasses,
-    ownedClasses: getClassesOwned(me, false),
+    ownedClasses: getClassesOwned(me, true),
     oldClasses: getClassesForUser(userid),
   };
 }

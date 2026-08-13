@@ -89,9 +89,13 @@ export function TextDisplay({ db, bookTitle, dictionary, shebanq_link, dbinfo, l
       }));
   }, [dictionary]);
 
-  // Nivel 3 (sentence): agrupamos las palabras por frase para párrafos
+  // Nivel 3 (sentence): agrupamos las palabras por frase para párrafos.
+  // jvulgate no tiene nivel 3 → usamos el nivel superior (patriarca, como el legacy).
   const sentences = useMemo(() => {
-    const level3 = dictionary.monadObjects[0].find((l) => l.level === 3)?.objects ?? [];
+    const sentenceLevel =
+      dictionary.monadObjects[0].find((l) => l.level === 3)
+      ?? dictionary.monadObjects[0][dictionary.monadObjects[0].length - 1];
+    const level3 = sentenceLevel?.objects ?? [];
     const groups: { monads: string; words: Word[] }[] = [];
     for (const s of level3) {
       groups.push({ monads: s.monads, words: words.filter((w) => contains(s.monads, w.monad)) });

@@ -131,6 +131,12 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
                     </TableCell>
                     <TableCell className="space-x-1 whitespace-nowrap">
                       <Link
+                        href={`/userclass/classes_for_user?userid=${u.id}&offset=${offset}&orderby=${p.orderby}&${p.sortorder}`}
+                        className="rounded bg-primary/10 px-2 py-0.5 text-xs text-primary hover:bg-primary/20"
+                      >
+                        Assign to class
+                      </Link>
+                      <Link
                         href={`/admin/users/edit?userid=${u.id}&offset=${offset}&orderby=${p.orderby}&${p.sortorder}`}
                         className="rounded bg-primary/10 px-2 py-0.5 text-xs text-primary hover:bg-primary/20"
                       >

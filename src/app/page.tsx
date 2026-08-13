@@ -79,6 +79,11 @@ export default async function Home() {
                   {langLine(lang, "menu", "manage_exercises")}
                 </Link>
               )}
+              {users.isTeacher(me) && (
+                <Link href="/stats/teacher_progress" className="text-primary underline-offset-4 hover:underline">
+                  {langLine(lang, "menu", "students_progress")}
+                </Link>
+              )}
               {users.isAdmin(me) && (
                 <Link href="/urls" className="text-primary underline-offset-4 hover:underline">
                   {langLine(lang, "menu", "manage_gloss_links")}
