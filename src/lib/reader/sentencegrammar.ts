@@ -158,7 +158,9 @@ export function getFeatureValueFriendlyName(
     : (l10n.emdrostype?.[featureType]?.[value] ?? value);
 }
 
-/** getFeatureValueOtherFormat (localization.ts): rangos _VALUES. */
+/** getFeatureValueOtherFormat (localization.ts): rangos _VALUES.
+ *  El JSON puede venir como array (files .prop.pretty.json) o como objeto
+ *  con claves numéricas (filas de db_localize) — como el foreach de PHP. */
 export function getFeatureValueOtherFormat(
   l10n: ReaderL10n,
   otype: string,
@@ -166,10 +168,11 @@ export function getFeatureValueOtherFormat(
   value: number,
 ): string {
   const table = l10n.emdrosobject[otype]?.[`${featureName}_VALUES`] as
+    | Record<string, { first: number; last: number; text: string }>
     | { first: number; last: number; text: string }[]
     | undefined;
   if (table === undefined) return "?";
-  for (const t of table) if (t.first <= value && t.last >= value) return t.text;
+  for (const t of Object.values(table)) if (t.first <= value && t.last >= value) return t.text;
   return "?";
 }
 
