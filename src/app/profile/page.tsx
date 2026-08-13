@@ -23,7 +23,7 @@ export default async function ProfilePage() {
           prefvariant: me.prefvariant,
           oauth2_login: me.oauth2_login,
         }}
-        languages={getAvailableLanguages()}
+        languages={getAvailableLanguages(lang)}
         variants={getAvailableVariants()}
         l10n={{
           youLogin: t("users", `you_login_${authority}`),
@@ -58,7 +58,7 @@ export default async function ProfilePage() {
         prefvariant: me.prefvariant,
         oauth2_login: me.oauth2_login,
       }}
-      languages={getAvailableLanguages()}
+      languages={getAvailableLanguages(lang)}
       variants={getAvailableVariants()}
       l10n={{
         title: t("users", "edit_user_profile"),

@@ -8,7 +8,7 @@ export default async function SignUpPage() {
   const t = (group: string, key: string) => langLine(lang, group, key);
   return (
     <SignUpForm
-      languages={getAvailableLanguages()}
+      languages={getAvailableLanguages(lang)}
       variants={getAvailableVariants()}
       l10n={{
         accountCreated: t("users", "you_created_account"),

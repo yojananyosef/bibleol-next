@@ -1,4 +1,4 @@
-import { checkTeacher } from "@/lib/auth/guards";
+import { checkTeacher, sessionLanguage } from "@/lib/auth/guards";
 import * as users from "@/lib/services/users";
 import { getAvailableLanguages, getAvailableVariants } from "@/lib/languages";
 import { parseUserListParams } from "@/lib/services/user-list";
@@ -6,6 +6,7 @@ import { EditUserForm } from "./edit-user-form";
 
 export default async function AdminEditUserPage({ searchParams }: PageProps<"/admin/users/edit">) {
   const me = await checkTeacher();
+  const lang = await sessionLanguage();
   const sp = await searchParams;
   const p = parseUserListParams(sp);
   const userid = parseInt(String(sp.userid ?? "0"), 10) || 0;
@@ -34,7 +35,7 @@ export default async function AdminEditUserPage({ searchParams }: PageProps<"/ad
         oauth2_login: u.oauth2_login,
       }}
       extras={{ offset: p.offset, orderby: p.orderby, sortorder: p.sortorder }}
-      languages={getAvailableLanguages()}
+      languages={getAvailableLanguages(lang)}
       variants={getAvailableVariants()}
     />
   );

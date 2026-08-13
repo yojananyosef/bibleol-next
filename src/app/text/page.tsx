@@ -20,7 +20,7 @@ export default async function TextPage() {
                 {databases.map((db) => (
                   <li key={db.name}>
                     <strong className="font-medium text-foreground">{db.name}</strong>
-                    {db.loc_copyright ? <div>{db.loc_copyright}</div> : null}
+                    {db.loc_copyright ? <div dangerouslySetInnerHTML={{ __html: db.loc_copyright }} /> : null}
                   </li>
                 ))}
               </ul>

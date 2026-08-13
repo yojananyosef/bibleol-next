@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession, clearSession } from "./session.ts";
 import * as users from "../services/users.ts";
 import { DataException, MSG } from "../errors.ts";
+import { normalizeLang } from "../languages.ts";
 
 /**
  * Estado del usuario actual de la sesión (solo lectura de BD, como Mod_users::$me).
@@ -88,5 +89,5 @@ export async function checkLoggedInOauth2(authority: "google" | "facebook"): Pro
 /** Idioma de la sesión (preferencia del usuario) con fallback "en". */
 export async function sessionLanguage(): Promise<string> {
   const session = await getSession();
-  return session?.language || "en";
+  return normalizeLang(session?.language || "en");
 }

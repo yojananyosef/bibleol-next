@@ -136,6 +136,20 @@ export default async function Home() {
           // html permitido (intro_center trae <h1>/<p>/<a>)
           dangerouslySetInnerHTML={{ __html: intro }}
         />
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            href="/text"
+            className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+          >
+            {langLine(lang, "text", "start_text_reading")}
+          </Link>
+          <Link
+            href="/quiz"
+            className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+          >
+            {langLine(lang, "text", "try_an_exercise")}
+          </Link>
+        </div>
       </section>
     </main>
   );
