@@ -86,12 +86,16 @@ export async function signUpAction(prev: ActionResult | null, formData: FormData
   const email = clean(formData.get("email"));
   const preflang = clean(formData.get("preflang"));
   const prefvariant = clean(formData.get("prefvariant"));
+  const pw1 = formData.get("password1")?.toString() ?? "";
+  const pw2 = formData.get("password2")?.toString() ?? "";
 
   if (!username) return { error: "user_name_required" };
   if (username.length > 20) return { error: "user_name_too_long" };
   if (!ALPHA_NUMERIC_RE.test(username)) return { error: "user_name_illegal" };
   if (!email || !EMAIL_RE.test(email)) return { error: "email_invalid" };
   if (users.getUserByNameOrEmail(username, "")) return { error: "user_name_used" };
+  if (pw1 !== pw2) return { error: "passwords_differ" };
+  if (pw1.length < MIN_PW_LENGTH) return { error: "pw_min_length" };
 
   const u = users.newUser();
   u.isadmin = 0;
@@ -105,14 +109,7 @@ export async function signUpAction(prev: ActionResult | null, formData: FormData
   u.preflang = preflang || "none";
   u.prefvariant = prefvariant || "";
 
-  const pw = generatePw();
-  users.setUser(u, pw);
-
-  await sendMail(
-    email,
-    "Account created",
-    `Your account at Bible Online Learner has been created.\n\nUsername: ${username}\nPassword: ${pw}\n\nLog in at ${origin()}/login`
-  );
+  users.setUser(u, pw1);
   return { ok: true };
 }
 

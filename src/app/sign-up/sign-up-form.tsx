@@ -11,12 +11,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface L10n {
   accountCreated: string;
-  passwordSent: string;
+  accountCreatedBody: string;
   goToLogin: string;
   createAccount: string;
   userInformation: string;
   username: string;
   email: string;
+  password: string;
+  repeatPassword: string;
   preferredLanguage: string;
   preferredVariant: string;
   none: string;
@@ -42,7 +44,7 @@ export function SignUpForm({
             <CardTitle>{l10n.accountCreated}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">{state.sent ? l10n.passwordSent : state.error}</p>
+            <p className="text-sm text-muted-foreground">{state.ok ? l10n.accountCreatedBody : state.error}</p>
             <p className="mt-4">
               <Link href="/login" className="text-sm text-primary underline-offset-4 hover:underline">
                 {l10n.goToLogin}
@@ -74,6 +76,14 @@ export function SignUpForm({
             <div className="space-y-2">
               <Label htmlFor="email">{l10n.email}</Label>
               <Input id="email" name="email" type="email" autoComplete="email" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password1">{l10n.password}</Label>
+              <Input id="password1" name="password1" type="password" autoComplete="new-password" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password2">{l10n.repeatPassword}</Label>
+              <Input id="password2" name="password2" type="password" autoComplete="new-password" required />
             </div>
             <div className="space-y-2">
               <Label>{l10n.preferredLanguage}</Label>

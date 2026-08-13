@@ -12,12 +12,14 @@ export default async function SignUpPage() {
       variants={getAvailableVariants()}
       l10n={{
         accountCreated: t("users", "you_created_account"),
-        passwordSent: t("users", "password_sent").replace("%s", "…"),
+        accountCreatedBody: t("users", "account_created_direct"),
         goToLogin: t("users", "go_to_home"),
         createAccount: t("users", "create_account"),
         userInformation: t("users", "specify_user_information"),
         username: t("users", "user_name"),
         email: t("users", "email"),
+        password: t("users", "password"),
+        repeatPassword: t("users", "repeat_password"),
         preferredLanguage: t("users", "preferred_language"),
         preferredVariant: t("users", "preferred_variant"),
         none: t("users", "no_language"),

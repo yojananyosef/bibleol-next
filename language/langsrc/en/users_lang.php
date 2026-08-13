@@ -11,6 +11,7 @@ $lang['account_created_message2t'] = "You have been granted facilitator privileg
 $lang['account_created_message3'] = "Please visit %s, and log in;\n"
         . "then change your password by selecting 'Profile' from the 'My data' menu.\n";
 $lang['account_created_subject'] = "Bible Online Learner account created";
+$lang['account_created_direct'] = "Your account has been created. You can now log in with your user name and password.";
 $lang['account_you_created_message1a'] = "Dear user,\n"
         . "\n"
         . "You have created an account at the Bible Online Learner website.\n"
